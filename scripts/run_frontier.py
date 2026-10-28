@@ -15,7 +15,7 @@ from frontier import PRESETS, compute_frontier
 from graph_sources import detect_geng, iter_connected_graphs
 
 
-EXPECTED_CONNECTED_COUNTS = {5: 21, 8: 11117}
+EXPECTED_CONNECTED_COUNTS = {5: 21, 8: 11117, 9: 261080}
 
 
 def parse_invariant_names(value: str) -> tuple[str, ...]:

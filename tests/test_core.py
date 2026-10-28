@@ -130,6 +130,7 @@ def test_frontier_multiple_invariants_presets_and_json_serialization():
 
 
 def test_frontier_cli_parsing_and_markdown_report():
+    assert frontier_cli.EXPECTED_CONNECTED_COUNTS[9] == 261080
     assert frontier_cli.parse_invariant_names("degree_sequence, adjacency_charpoly") == ("degree_sequence", "adjacency_charpoly")
     report = frontier_cli.markdown_report("F6", {
         "invariant_display_names": ["Degree sequence"], "orders_checked": [1],
