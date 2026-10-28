@@ -6,7 +6,6 @@ An interactive, exact-arithmetic laboratory for finite graph-invariant fingerpri
 
 Can a few numerical properties of a graph uniquely identify it? If not, what is the first pair of different graphs that those properties confuse?
 
-Screenshots are not committed yet. Capture the **Twin comparison** tab as `docs/images/twin-comparison.png` (graphs, fingerprint table, and optional diameter highlight) and the **Frontier heatmap** tab as `docs/images/frontier-heatmap.png` (the full grid and legend). Then embed those files here.
 
 ## Quick start
 
@@ -32,6 +31,8 @@ Fingerprint Frontier is the largest graph order exhaustively verified collision-
 
 `G = G?AFBo` and <code>H = G?B@&#96;w</code> are connected graphs with 8 vertices, 8 edges, and triangle count 0. They have the same degree sequence `(4,3,2,2,2,1,1,1)` and exact adjacency characteristic-polynomial coefficients `[1, 0, -8, 0, 14, 0, -4, 0, 0]`, yet `nx.is_isomorphic(G, H)` is false. Their diameters are `G = 5` and `H = 4`. Same fingerprint does not mean same graph.
 
+![Twin comparison of two non-isomorphic graphs with matching selected invariants](docs/images/twin-comparison.png)
+
 ## Results (finite domain)
 
 | Fingerprint | Verified outcome | Frontier |
@@ -44,6 +45,8 @@ Fingerprint Frontier is the largest graph order exhaustively verified collision-
 | FG generalized characteristic polynomial | collision-free through n=8; first collision at n=9; 261,080 graphs examined | 8 |
 
 The Frontier heatmap uses ✅ for exhaustively collision-free, ❌ for first collision, and ➖ for not reported; color is not the only signal. All outcomes are finite computational results for the enumerated domain, not universal graph-theoretic theorems.
+
+![Fingerprint Frontier heatmap showing finite collision status by order](docs/images/frontier-heatmap.png)
 
 ## Related work
 
