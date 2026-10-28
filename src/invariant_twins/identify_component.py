@@ -120,7 +120,8 @@ def analyze_state(value: Any, minimum: list[tuple[str, ...]] | None = None) -> d
         invariant_rows = [{"id": key, "name": definition.display_name, "value": _display(compute_invariant(graph, key))} for key, definition in INVARIANT_REGISTRY.items()]
     base: dict[str, Any] = {
         "order": graph.number_of_nodes(), "size": graph.number_of_edges(), "invariants": invariant_rows,
-        "ready": False, "count": 0, "domainSize": 0, "candidates": [], "minimum": minimum or [],
+        "ready": False, "count": 0, "rivalCount": 0, "matchingClassSize": 0,
+        "domainSize": 0, "candidates": [], "minimum": minimum or [], "minimumComputed": minimum is not None,
     }
     if graph.number_of_nodes() == 0:
         return base | {"message": "Add at least one vertex to begin identification."}
@@ -130,18 +131,24 @@ def analyze_state(value: Any, minimum: list[tuple[str, ...]] | None = None) -> d
         return base | {"message": "Use a connected simple graph with at most 7 vertices for this finite comparison domain."}
     selected = state["selectedInvariants"]
     domain = _domain(graph.number_of_nodes())
-    candidates = candidate_class(graph, selected, domain)
-    ranking = rank_next_invariants(graph, candidates, selected)
+    matching_class = candidate_class(graph, selected, domain)
+    # candidate_class intentionally retains the target's isomorphism class for
+    # mathematical search semantics. The UI separately presents only rivals.
+    rivals = [candidate for candidate in matching_class if not nx.is_isomorphic(candidate, graph)]
+    ranking = rank_next_invariants(graph, matching_class, selected)
     candidate_records = []
-    for candidate in candidates[:18]:
+    for candidate in rivals[:18]:
         record = _positioned_graph(candidate)
         record.update({"order": candidate.number_of_nodes(), "size": candidate.number_of_edges(), "graph6": _graph6(candidate)})
         candidate_records.append(record)
-    best = ({"id": ranking[0][0], "remaining": ranking[0][2]} if ranking else None)
+    best = ({"id": ranking[0][0], "remaining": max(0, ranking[0][2] - 1)} if rivals and ranking else None)
+    rival_count = len(rivals)
+    possible_rivals = max(0, len(domain) - 1)
     return base | {
-        "ready": True, "count": len(candidates), "domainSize": len(domain),
-        "eliminated": round(100 * (1 - len(candidates) / len(domain))) if domain else 0,
-        "unique": len(candidates) == 1, "best": best, "candidates": candidate_records,
+        "ready": True, "count": rival_count, "rivalCount": rival_count,
+        "matchingClassSize": len(matching_class), "domainSize": len(domain),
+        "eliminated": round(100 * (1 - rival_count / possible_rivals)) if possible_rivals else 100,
+        "unique": rival_count == 0, "best": best, "candidates": candidate_records,
         "graph6": _graph6(graph), "degreeSequence": _display(degree_sequence(graph)),
         "triangleCount": compute_invariant(graph, "triangle_count"),
         "fingerprint": _display(graph_fingerprint(graph, selected)),
@@ -178,7 +185,7 @@ def render() -> None:
     """Mount the single Components v2 Identify My Graph workspace."""
     if "identify_component_state" not in st.session_state:
         st.session_state.identify_component_state = example_state()
-        st.session_state.identify_component_minimum = []
+        st.session_state.identify_component_minimum = None
     state = normalize_state(st.session_state.identify_component_state)
     workspace = _identify_workspace()
     result = workspace(
@@ -191,10 +198,11 @@ def render() -> None:
     received = result.get("state")
     if isinstance(received, dict):
         state = normalize_state(received)
-    state, compute_minimum = _apply_event(state, result.get("event"))
+    event = result.get("event")
+    state, compute_minimum = _apply_event(state, event)
     if compute_minimum:
         graph = graph_from_state(state)
         st.session_state.identify_component_minimum = minimum_identifying_sets(graph, _domain(graph.number_of_nodes())) if supported_graph(graph) else []
-    elif result.get("event") in ({"type": "clear_graph"}, {"type": "load_example"}):
-        st.session_state.identify_component_minimum = []
+    elif isinstance(event, dict) and event.get("type") in {"graph_changed", "clear_graph", "load_example"}:
+        st.session_state.identify_component_minimum = None
     st.session_state.identify_component_state = state

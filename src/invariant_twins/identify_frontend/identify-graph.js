@@ -9061,19 +9061,23 @@ var e = Object.create, t = Object.defineProperty, n = Object.getOwnPropertyDescr
 	t.exports = y();
 })))(), ee = "ABCDEFG", te = (e, t) => t.invariants?.find((t) => t.id === e)?.name || e, ne = (e) => JSON.parse(JSON.stringify(e));
 function re({ graph: e, title: t }) {
-	let n = new Map(e.nodes.map((e, t) => [e.id, e]));
+	let n = e.nodes.map((e) => e.x), r = e.nodes.map((e) => e.y), i = n.length ? Math.min(...n) : 0, a = n.length ? Math.max(...n) : 1, o = r.length ? Math.min(...r) : 0, s = r.length ? Math.max(...r) : 1, c = a - i || 1, l = s - o || 1, u = new Map(e.nodes.map((e) => [e.id, {
+		...e,
+		x: 25 + 170 * (e.x - i) / c,
+		y: 20 + 95 * (e.y - o) / l
+	}]));
 	return /* @__PURE__ */ (0, b.jsxs)("svg", {
 		className: "mini-graph",
-		viewBox: "0 0 220 120",
+		viewBox: "0 0 220 140",
 		role: "img",
 		"aria-label": t,
 		children: [e.edges.map((e, t) => {
-			let r = n.get(e.source), i = n.get(e.target);
-			return r && i ? /* @__PURE__ */ (0, b.jsx)("line", {
-				x1: r.x,
-				y1: r.y,
-				x2: i.x,
-				y2: i.y
+			let n = u.get(e.source), r = u.get(e.target);
+			return n && r ? /* @__PURE__ */ (0, b.jsx)("line", {
+				x1: n.x,
+				y1: n.y,
+				x2: r.x,
+				y2: r.y
 			}, t) : null;
 		}), e.nodes.map((e) => /* @__PURE__ */ (0, b.jsxs)("g", { children: [/* @__PURE__ */ (0, b.jsx)("circle", {
 			cx: e.x,
@@ -9217,20 +9221,42 @@ function x({ state: e, emit: t }) {
 	})] });
 }
 function ie({ bridge: e }) {
-	let [t, n] = (0, _.useState)(e.data.state), [r, i] = (0, _.useState)([]);
+	let [t, n] = (0, _.useState)(e.data.state), [r, i] = (0, _.useState)([]), [a, o] = (0, _.useState)(!1);
 	(0, _.useEffect)(() => n(e.data.state), [e.data.state]);
-	let a = e.data.analysis, o = (r, a = "graph_changed") => {
+	let s = e.data.analysis, c = (r, a = "graph_changed") => {
 		i((e) => [...e, ne(t)].slice(-20)), n(r), e.setStateValue("state", r), e.setTriggerValue("event", { type: a });
-	}, s = (t) => e.setTriggerValue("event", { type: t }), c = (e) => o({
+	}, l = (t) => e.setTriggerValue("event", { type: t }), u = (e) => c({
 		...t,
 		selectedInvariants: t.selectedInvariants.includes(e) ? t.selectedInvariants.filter((t) => t !== e) : [...t.selectedInvariants, e]
-	}, "selected_invariants_changed");
+	}, "selected_invariants_changed"), d = s.minimumComputed ? (s.minimum?.length ?? 0) > 0 ? /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [
+		/* @__PURE__ */ (0, b.jsx)("p", { children: "This graph can be uniquely identified using only:" }),
+		/* @__PURE__ */ (0, b.jsx)("p", { children: (a ? s.minimum.flat() : s.minimum[0]).map((e, t) => /* @__PURE__ */ (0, b.jsx)("mark", { children: te(e, s) }, `${e}-${t}`)) }),
+		/* @__PURE__ */ (0, b.jsxs)("small", { children: [
+			s.minimum[0].length,
+			" invariants · ",
+			s.minimum.length,
+			" minimum identifying ",
+			s.minimum.length === 1 ? "set" : "sets",
+			" found"
+		] }),
+		s.minimum.length > 1 && /* @__PURE__ */ (0, b.jsx)("button", {
+			className: "alternatives",
+			onClick: () => o(!a),
+			children: a ? "Hide alternatives" : "View alternatives"
+		})
+	] }) : /* @__PURE__ */ (0, b.jsx)("div", {
+		className: "neutral",
+		children: "No identifying subset exists within the currently supported invariant family for this finite domain."
+	}) : /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [/* @__PURE__ */ (0, b.jsx)("p", { children: "Find the smallest supported invariant subset that uniquely identifies this graph." }), /* @__PURE__ */ (0, b.jsx)("button", {
+		onClick: () => l("compute_minimum_identifying_set"),
+		children: "Compute"
+	})] });
 	return /* @__PURE__ */ (0, b.jsxs)("main", {
 		className: "workspace",
 		children: [
 			/* @__PURE__ */ (0, b.jsxs)("section", {
 				className: "hero",
-				children: [/* @__PURE__ */ (0, b.jsxs)("div", { children: [/* @__PURE__ */ (0, b.jsxs)("h1", { children: ["Identify My Graph ", /* @__PURE__ */ (0, b.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, b.jsx)("p", { children: "How little information is enough to uniquely identify your graph?" })] }), /* @__PURE__ */ (0, b.jsx)("aside", { children: "Draw a graph, select invariants, and see how many non-isomorphic graphs match. Discover the minimum set of invariants needed to identify it." })]
+				children: [/* @__PURE__ */ (0, b.jsxs)("div", { children: [/* @__PURE__ */ (0, b.jsxs)("h1", { children: ["Identify My Graph ", /* @__PURE__ */ (0, b.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, b.jsx)("p", { children: "How little information is enough to uniquely identify your graph?" })] }), /* @__PURE__ */ (0, b.jsx)("aside", { children: "Draw a graph, select invariants, and see how many non-isomorphic graphs still match. Discover the smallest supported invariant set that identifies it within the finite comparison domain." })]
 			}),
 			/* @__PURE__ */ (0, b.jsxs)("section", {
 				className: "top-grid",
@@ -9241,7 +9267,7 @@ function ie({ bridge: e }) {
 							/* @__PURE__ */ (0, b.jsx)("h2", { children: "Graph Editor" }),
 							/* @__PURE__ */ (0, b.jsx)(x, {
 								state: t,
-								emit: o
+								emit: c
 							}),
 							/* @__PURE__ */ (0, b.jsxs)("div", {
 								className: "action-row",
@@ -9250,18 +9276,18 @@ function ie({ bridge: e }) {
 										onClick: () => {
 											if (r.length) {
 												let e = r[r.length - 1];
-												i(r.slice(0, -1)), o(e, "graph_changed");
+												i(r.slice(0, -1)), c(e, "graph_changed");
 											}
 										},
 										disabled: !r.length,
 										children: "↶ Undo"
 									}),
 									/* @__PURE__ */ (0, b.jsx)("button", {
-										onClick: () => s("clear_graph"),
+										onClick: () => l("clear_graph"),
 										children: "Clear"
 									}),
 									/* @__PURE__ */ (0, b.jsx)("button", {
-										onClick: () => s("load_example"),
+										onClick: () => l("load_example"),
 										children: "Load example"
 									})
 								]
@@ -9274,21 +9300,21 @@ function ie({ bridge: e }) {
 							/* @__PURE__ */ (0, b.jsxs)("div", {
 								className: "heading",
 								children: [/* @__PURE__ */ (0, b.jsxs)("h2", { children: ["Invariants ", /* @__PURE__ */ (0, b.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, b.jsx)("button", {
-									onClick: () => o({
+									onClick: () => c({
 										...t,
-										selectedInvariants: a.invariants.map((e) => e.id)
+										selectedInvariants: s.invariants.map((e) => e.id)
 									}, "selected_invariants_changed"),
 									children: "Select all"
 								})]
 							}),
 							/* @__PURE__ */ (0, b.jsx)("div", {
 								className: "invariants",
-								children: (a.invariants || []).map((e) => /* @__PURE__ */ (0, b.jsxs)("label", { children: [
+								children: (s.invariants || []).map((e) => /* @__PURE__ */ (0, b.jsxs)("label", { children: [
 									/* @__PURE__ */ (0, b.jsx)("input", {
 										type: "checkbox",
 										checked: t.selectedInvariants.includes(e.id),
-										onChange: () => c(e.id),
-										disabled: !a.ready
+										onChange: () => u(e.id),
+										disabled: !s.ready
 									}),
 									/* @__PURE__ */ (0, b.jsx)("b", { children: e.name }),
 									/* @__PURE__ */ (0, b.jsx)("span", { children: e.value })
@@ -9301,63 +9327,60 @@ function ie({ bridge: e }) {
 						className: "card identification",
 						children: [/* @__PURE__ */ (0, b.jsxs)("div", {
 							className: "heading",
-							children: [/* @__PURE__ */ (0, b.jsxs)("h2", { children: ["Identification ", /* @__PURE__ */ (0, b.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, b.jsxs)("em", { children: ["n = ", a.order ?? 0] })]
-						}), a.ready ? /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [
+							children: [/* @__PURE__ */ (0, b.jsxs)("h2", { children: ["Identification ", /* @__PURE__ */ (0, b.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, b.jsxs)("em", { children: ["n = ", s.order ?? 0] })]
+						}), s.ready ? /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [
 							/* @__PURE__ */ (0, b.jsxs)("div", {
 								className: "metric",
 								children: [
-									/* @__PURE__ */ (0, b.jsx)("strong", { children: a.count }),
-									/* @__PURE__ */ (0, b.jsx)("b", { children: a.count === 1 ? "candidate remains" : "candidates remain" }),
+									/* @__PURE__ */ (0, b.jsx)("strong", { children: s.rivalCount }),
+									/* @__PURE__ */ (0, b.jsx)("b", { children: s.rivalCount === 1 ? "rival remains" : "rivals remain" }),
 									/* @__PURE__ */ (0, b.jsxs)("span", { children: [
 										"out of ",
-										a.domainSize,
-										" non-isomorphic graphs"
+										Math.max(0, (s.domainSize || 0) - 1),
+										" possible non-isomorphic rivals"
 									] })
 								]
 							}),
 							/* @__PURE__ */ (0, b.jsx)("div", {
 								className: "bar",
-								children: /* @__PURE__ */ (0, b.jsx)("i", { style: { width: `${a.eliminated || 0}%` } })
+								children: /* @__PURE__ */ (0, b.jsx)("i", { style: { width: `${s.eliminated || 0}%` } })
 							}),
-							/* @__PURE__ */ (0, b.jsxs)("small", { children: [a.eliminated || 0, "% eliminated"] }),
-							a.unique ? /* @__PURE__ */ (0, b.jsx)("div", {
+							/* @__PURE__ */ (0, b.jsxs)("small", { children: [s.eliminated || 0, "% of possible rivals eliminated"] }),
+							s.unique && /* @__PURE__ */ (0, b.jsx)("div", {
 								className: "success",
-								children: "✓ Your graph is identified within the stated finite domain."
-							}) : /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [/* @__PURE__ */ (0, b.jsx)("div", {
+								children: "✓ Graph identified within the stated finite domain."
+							}),
+							!s.unique && /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [/* @__PURE__ */ (0, b.jsx)("div", {
 								className: "danger",
 								children: "ⓘ Your current fingerprint does not uniquely identify the graph."
-							}), a.best && /* @__PURE__ */ (0, b.jsxs)("div", {
+							}), s.best && /* @__PURE__ */ (0, b.jsxs)("div", {
 								className: "recommend",
 								children: [
 									/* @__PURE__ */ (0, b.jsx)("small", { children: "✦ Best next invariant" }),
-									/* @__PURE__ */ (0, b.jsx)("h3", { children: te(a.best.id, a) }),
+									/* @__PURE__ */ (0, b.jsx)("h3", { children: te(s.best.id, s) }),
 									/* @__PURE__ */ (0, b.jsxs)("p", { children: [
-										a.count,
+										s.rivalCount,
 										" → ",
-										a.best.remaining,
-										" candidates"
+										s.best.remaining,
+										" rivals"
 									] }),
 									/* @__PURE__ */ (0, b.jsxs)("button", {
-										onClick: () => s("apply_recommended_invariant"),
-										children: ["＋ Add ", te(a.best.id, a)]
+										onClick: () => l("apply_recommended_invariant"),
+										children: ["＋ Add ", te(s.best.id, s)]
 									})
 								]
 							})] }),
 							/* @__PURE__ */ (0, b.jsxs)("div", {
 								className: "minimum",
-								children: [
-									/* @__PURE__ */ (0, b.jsx)("b", { children: "♜ Minimum identifying set" }),
-									/* @__PURE__ */ (0, b.jsx)("button", {
-										onClick: () => s("compute_minimum_identifying_set"),
-										children: "Compute"
-									}),
-									a.minimum?.length > 0 && /* @__PURE__ */ (0, b.jsx)("p", { children: a.minimum[0].map((e) => /* @__PURE__ */ (0, b.jsx)("mark", { children: te(e, a) }, e)) })
-								]
+								children: [/* @__PURE__ */ (0, b.jsx)("b", { children: "♜ Minimum identifying set" }), d]
 							})
-						] }) : /* @__PURE__ */ (0, b.jsx)("div", {
+						] }) : /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [/* @__PURE__ */ (0, b.jsx)("div", {
 							className: "neutral",
-							children: a.message
-						})]
+							children: s.message
+						}), /* @__PURE__ */ (0, b.jsxs)("div", {
+							className: "minimum",
+							children: [/* @__PURE__ */ (0, b.jsx)("b", { children: "♜ Minimum identifying set" }), /* @__PURE__ */ (0, b.jsx)("p", { children: "Available after identification can begin." })]
+						})] })]
 					})
 				]
 			}),
@@ -9368,59 +9391,72 @@ function ie({ bridge: e }) {
 					children: [/* @__PURE__ */ (0, b.jsxs)("div", {
 						className: "heading",
 						children: [/* @__PURE__ */ (0, b.jsx)("h2", { children: "Current Fingerprint" }), /* @__PURE__ */ (0, b.jsx)("button", {
-							onClick: () => navigator.clipboard?.writeText(a.graph6 || ""),
-							children: "▣ Copy"
+							onClick: () => navigator.clipboard?.writeText(s.fingerprint || ""),
+							children: "▣ Copy fingerprint"
 						})]
-					}), a.ready ? /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [
+					}), s.ready ? /* @__PURE__ */ (0, b.jsxs)(b.Fragment, { children: [
 						/* @__PURE__ */ (0, b.jsxs)("dl", { children: [
 							/* @__PURE__ */ (0, b.jsx)("dt", { children: "Order (n)" }),
-							/* @__PURE__ */ (0, b.jsx)("dd", { children: a.order }),
+							/* @__PURE__ */ (0, b.jsx)("dd", { children: s.order }),
 							/* @__PURE__ */ (0, b.jsx)("dt", { children: "Size (m)" }),
-							/* @__PURE__ */ (0, b.jsx)("dd", { children: a.size }),
+							/* @__PURE__ */ (0, b.jsx)("dd", { children: s.size }),
 							/* @__PURE__ */ (0, b.jsx)("dt", { children: "Degree sequence" }),
-							/* @__PURE__ */ (0, b.jsx)("dd", { children: a.degreeSequence }),
+							/* @__PURE__ */ (0, b.jsx)("dd", { children: s.degreeSequence }),
 							/* @__PURE__ */ (0, b.jsx)("dt", { children: "Triangle count" }),
-							/* @__PURE__ */ (0, b.jsx)("dd", { children: a.triangleCount })
+							/* @__PURE__ */ (0, b.jsx)("dd", { children: s.triangleCount })
 						] }),
-						/* @__PURE__ */ (0, b.jsx)("small", { children: "Graph6 encoding" }),
-						/* @__PURE__ */ (0, b.jsx)("code", { children: a.graph6 })
-					] }) : /* @__PURE__ */ (0, b.jsx)("p", { children: a.message })]
+						/* @__PURE__ */ (0, b.jsxs)("div", {
+							className: "graph6-row",
+							children: [/* @__PURE__ */ (0, b.jsx)("small", { children: "Graph6 encoding" }), /* @__PURE__ */ (0, b.jsx)("button", {
+								onClick: () => navigator.clipboard?.writeText(s.graph6 || ""),
+								children: "▣ Copy graph6"
+							})]
+						}),
+						/* @__PURE__ */ (0, b.jsx)("code", { children: s.graph6 })
+					] }) : /* @__PURE__ */ (0, b.jsx)("p", { children: s.message })]
 				}), /* @__PURE__ */ (0, b.jsxs)("article", {
 					className: "card gallery",
-					children: [/* @__PURE__ */ (0, b.jsxs)("h2", { children: ["Candidate Graphs ", /* @__PURE__ */ (0, b.jsx)("small", { children: a.count ? `(${a.count} non-isomorphic graphs)` : "" })] }), a.ready ? /* @__PURE__ */ (0, b.jsxs)("div", {
+					children: [/* @__PURE__ */ (0, b.jsxs)("h2", { children: ["Candidate Graphs ", /* @__PURE__ */ (0, b.jsx)("small", { children: `(${s.rivalCount || 0} non-isomorphic rivals)` })] }), s.ready ? /* @__PURE__ */ (0, b.jsxs)("div", {
 						className: "cards",
-						children: [/* @__PURE__ */ (0, b.jsxs)("div", {
-							className: "candidate yours",
-							children: [
-								/* @__PURE__ */ (0, b.jsx)("b", { children: "Your Graph (G)" }),
-								/* @__PURE__ */ (0, b.jsx)(re, {
-									graph: t,
-									title: "Your graph"
-								}),
-								/* @__PURE__ */ (0, b.jsxs)("small", { children: [
-									"n = ",
-									a.order,
-									" · m = ",
-									a.size
-								] })
-							]
-						}), (a.candidates || []).map((e, t) => /* @__PURE__ */ (0, b.jsxs)("div", {
-							className: "candidate",
-							children: [
-								/* @__PURE__ */ (0, b.jsxs)("b", { children: ["Candidate #", t + 1] }),
-								/* @__PURE__ */ (0, b.jsx)(re, {
-									graph: e,
-									title: `Candidate ${t + 1}`
-								}),
-								/* @__PURE__ */ (0, b.jsxs)("small", { children: [
-									"n = ",
-									e.order,
-									" · m = ",
-									e.size
-								] }),
-								/* @__PURE__ */ (0, b.jsx)("code", { children: e.graph6 })
-							]
-						}, e.graph6))]
+						children: [
+							/* @__PURE__ */ (0, b.jsxs)("div", {
+								className: "candidate yours",
+								children: [
+									/* @__PURE__ */ (0, b.jsx)("b", { children: "Your Graph (G)" }),
+									/* @__PURE__ */ (0, b.jsx)(re, {
+										graph: t,
+										title: "Your graph"
+									}),
+									/* @__PURE__ */ (0, b.jsxs)("small", { children: [
+										"n = ",
+										s.order,
+										" · m = ",
+										s.size
+									] })
+								]
+							}),
+							(s.candidates || []).map((e, t) => /* @__PURE__ */ (0, b.jsxs)("div", {
+								className: "candidate",
+								children: [
+									/* @__PURE__ */ (0, b.jsxs)("b", { children: ["Candidate #", t + 1] }),
+									/* @__PURE__ */ (0, b.jsx)(re, {
+										graph: e,
+										title: `Candidate ${t + 1}`
+									}),
+									/* @__PURE__ */ (0, b.jsxs)("small", { children: [
+										"n = ",
+										e.order,
+										" · m = ",
+										e.size
+									] }),
+									/* @__PURE__ */ (0, b.jsx)("code", { children: e.graph6 })
+								]
+							}, e.graph6)),
+							s.rivalCount === 0 && /* @__PURE__ */ (0, b.jsx)("div", {
+								className: "gallery-empty",
+								children: "No non-isomorphic rivals remain under the selected fingerprint."
+							})
+						]
 					}) : /* @__PURE__ */ (0, b.jsx)("div", {
 						className: "neutral",
 						children: "Candidate graphs will appear here when identification can begin."

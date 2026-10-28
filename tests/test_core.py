@@ -20,7 +20,7 @@ from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, comput
 from invariant_twins.frontier_view import verified_rows
 from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, LEARN_SECTIONS, preset_label
 from invariant_twins.identification import candidate_class, graph_fingerprint, minimum_identifying_sets, rank_next_invariants, supported_graph
-from invariant_twins.identify_component import _identify_workspace, analyze_state, empty_state, example_state, graph_from_state, normalize_state
+from invariant_twins.identify_component import _identify_workspace, _graph6, analyze_state, empty_state, example_state, graph_from_state, normalize_state
 from invariant_twins.invariants import INVARIANT_REGISTRY
 
 
@@ -97,6 +97,30 @@ def test_identify_component_bundle_does_not_require_node_process_global():
     from pathlib import Path
     bundle = Path(__file__).parents[1] / "src" / "invariant_twins" / "identify_frontend" / "identify-graph.js"
     assert "process.env.NODE_ENV" not in bundle.read_text(encoding="utf-8")
+
+
+def test_identify_adapter_reports_only_nonisomorphic_rivals(monkeypatch):
+    import invariant_twins.identify_component as identify_component
+    target = nx.path_graph(4)
+    rival = nx.star_graph(3)
+    monkeypatch.setattr(identify_component, "_domain", lambda order: [target, rival])
+    state = {"nodes": [{"id": str(node), "x": node * 10, "y": node * 10} for node in target], "edges": [{"source": str(a), "target": str(b)} for a, b in target.edges()], "selectedInvariants": []}
+    data = analyze_state(state)
+    assert data["matchingClassSize"] == 2
+    assert data["rivalCount"] == data["count"] == 1
+    assert not data["unique"] and len(data["candidates"]) == 1
+    assert data["candidates"][0]["graph6"] != _graph6(target)
+    assert data["eliminated"] == 0
+
+
+def test_identify_adapter_unique_and_one_graph_domain_have_safe_rival_semantics(monkeypatch):
+    import invariant_twins.identify_component as identify_component
+    target = nx.path_graph(4)
+    monkeypatch.setattr(identify_component, "_domain", lambda order: [target])
+    state = {"nodes": [{"id": str(node), "x": node, "y": node} for node in target], "edges": [{"source": str(a), "target": str(b)} for a, b in target.edges()], "selectedInvariants": []}
+    data = analyze_state(state)
+    assert data["rivalCount"] == 0 and data["unique"]
+    assert data["eliminated"] == 100 and data["candidates"] == []
 
 
 def test_twin_view_graph6_witnesses_and_diameter_paths():
