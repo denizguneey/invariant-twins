@@ -52,30 +52,32 @@ def _editor(graph: nx.Graph) -> None:
     st.markdown("#### Graph Editor")
     st.caption("Simple undirected graph · connected · up to 7 vertices")
     components.html(graph_to_svg(graph, seed=702, title=f"Your graph, {graph.number_of_nodes()} vertices, {graph.number_of_edges()} edges", node_labels=_labels(graph)), height=330, scrolling=False)
-    a, b, c, d = st.columns(4)
-    if a.button("Add vertex", disabled=graph.number_of_nodes() >= 7, key="id_add_vertex"):
-        _push_undo(); st.session_state.identify_graph.add_node(max(graph.nodes(), default=-1) + 1); st.rerun()
-    if b.button("Load example", key="id_example"):
-        _push_undo(); st.session_state.identify_graph = _example_graph(); st.rerun()
-    if c.button("Clear", key="id_clear"):
-        _push_undo(); st.session_state.identify_graph = nx.Graph(); st.rerun()
-    if d.button("Undo", disabled=not st.session_state.identify_undo, key="id_undo"):
-        _restore_graph(st.session_state.identify_undo.pop()); st.rerun()
-    names = _labels(graph)
-    if graph.nodes:
-        remove = st.selectbox("Delete vertex", list(graph.nodes()), format_func=lambda node: names[node], key="id_remove_vertex")
-        if st.button("Delete selected vertex", key="id_delete_vertex"):
-            _push_undo(); st.session_state.identify_graph.remove_node(remove); st.rerun()
-    if graph.number_of_nodes() >= 2:
-        left, right = st.columns(2)
-        edge_a = left.selectbox("Edge endpoint A", list(graph.nodes()), format_func=lambda node: names[node], key="id_edge_a")
-        edge_b = right.selectbox("Edge endpoint B", list(graph.nodes()), format_func=lambda node: names[node], key="id_edge_b")
-        if st.button("Add edge", disabled=edge_a == edge_b or graph.has_edge(edge_a, edge_b), key="id_add_edge"):
-            _push_undo(); st.session_state.identify_graph.add_edge(edge_a, edge_b); st.rerun()
-    if graph.edges:
-        edge = st.selectbox("Delete edge", list(graph.edges()), format_func=lambda item: f"{names[item[0]]} — {names[item[1]]}", key="id_delete_edge_select")
-        if st.button("Delete selected edge", key="id_delete_edge"):
-            _push_undo(); st.session_state.identify_graph.remove_edge(*edge); st.rerun()
+    st.caption("Canvas preview · deterministic layout · labels A, B, C…")
+    with st.expander("Advanced editing"):
+        a, b, c, d = st.columns(4)
+        if a.button("Add vertex", disabled=graph.number_of_nodes() >= 7, key="id_add_vertex"):
+            _push_undo(); st.session_state.identify_graph.add_node(max(graph.nodes(), default=-1) + 1); st.rerun()
+        if b.button("Load example", key="id_example"):
+            _push_undo(); st.session_state.identify_graph = _example_graph(); st.rerun()
+        if c.button("Clear", key="id_clear"):
+            _push_undo(); st.session_state.identify_graph = nx.Graph(); st.rerun()
+        if d.button("Undo", disabled=not st.session_state.identify_undo, key="id_undo"):
+            _restore_graph(st.session_state.identify_undo.pop()); st.rerun()
+        names = _labels(graph)
+        if graph.nodes:
+            remove = st.selectbox("Delete vertex", list(graph.nodes()), format_func=lambda node: names[node], key="id_remove_vertex")
+            if st.button("Delete selected vertex", key="id_delete_vertex"):
+                _push_undo(); st.session_state.identify_graph.remove_node(remove); st.rerun()
+        if graph.number_of_nodes() >= 2:
+            left, right = st.columns(2)
+            edge_a = left.selectbox("Edge endpoint A", list(graph.nodes()), format_func=lambda node: names[node], key="id_edge_a")
+            edge_b = right.selectbox("Edge endpoint B", list(graph.nodes()), format_func=lambda node: names[node], key="id_edge_b")
+            if st.button("Add edge", disabled=edge_a == edge_b or graph.has_edge(edge_a, edge_b), key="id_add_edge"):
+                _push_undo(); st.session_state.identify_graph.add_edge(edge_a, edge_b); st.rerun()
+        if graph.edges:
+            edge = st.selectbox("Delete edge", list(graph.edges()), format_func=lambda item: f"{names[item[0]]} — {names[item[1]]}", key="id_delete_edge_select")
+            if st.button("Delete selected edge", key="id_delete_edge"):
+                _push_undo(); st.session_state.identify_graph.remove_edge(*edge); st.rerun()
 
 
 def render() -> None:

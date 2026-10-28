@@ -18,12 +18,28 @@ from invariant_twins import identification_view
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
+st.markdown("""<style>
+  .stApp { background:#f7f9fc; color:#0f172a; }
+  .block-container { max-width:1540px; padding-top:1.2rem; padding-bottom:2rem; }
+  header[data-testid="stHeader"], [data-testid="stToolbar"] { background:transparent; }
+  [data-testid="stSidebar"] { display:none; }
+  h1,h2,h3 { color:#0f172a !important; letter-spacing:-.02em; }
+  h1 { font-size:2.15rem !important; } h3 { font-size:1.1rem !important; }
+  [data-testid="stMetric"], [data-testid="stVerticalBlockBorderWrapper"] { background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 2px 10px rgba(15,23,42,.04); }
+  [data-testid="stVerticalBlockBorderWrapper"] { padding: .75rem; }
+  .stButton > button, .stLinkButton > a { border-radius:8px; min-height:2.2rem; font-weight:600; }
+  .stButton > button[kind="primary"] { background:#4f46e5; border-color:#4f46e5; }
+  [data-testid="stDataFrame"] { border:1px solid #e2e8f0; border-radius:9px; overflow:hidden; }
+  [data-testid="stAlert"] { border-radius:9px; }
+  [data-testid="stSegmentedControl"] button { border-radius:8px !important; }
+  [data-testid="stSegmentedControl"] button[aria-checked="true"] { background:#eef2ff !important; color:#4f46e5 !important; }
+  .it-brand p { margin:0; color:#64748b; font-size:.78rem; }
+</style>""", unsafe_allow_html=True)
 brand, navigation, links = st.columns((1.35, 2.7, 1.0))
 with brand:
-    st.markdown("### ◇ Invariant Twins")
-    st.caption("Exploring how graph invariants distinguish graphs")
+    st.markdown("<div class='it-brand'><h3>◇ Invariant Twins</h3><p>Exploring how graph invariants distinguish graphs</p></div>", unsafe_allow_html=True)
 with navigation:
-    page = st.radio("Main navigation", ["Explore Twins", "Identify My Graph", "Fingerprint Frontier", "Research"], horizontal=True, label_visibility="collapsed", index=1)
+    page = st.segmented_control("Main navigation", ["Explore Twins", "Identify My Graph", "Fingerprint Frontier", "Research"], default="Identify My Graph", label_visibility="collapsed")
 with links:
     st.link_button("GitHub", "https://github.com/denizguneey/invariant-twins", width="stretch")
     st.link_button("Docs", "https://github.com/denizguneey/invariant-twins/tree/main/docs", width="stretch")
