@@ -30,7 +30,7 @@ The order-8 experiment has **not yet been executed** in GitHub Actions. It is co
 
 ### Computational result
 
-The manual Ubuntu workflow exhaustively processed all 11,117 connected unlabeled graphs of order 8 and found a first fingerprint collision. Its graph6 witnesses are `G?AFBo` and `G?B@\`w`; they have common degree sequence \((4,3,2,2,2,1,1,1)\), common exact characteristic-polynomial coefficients \((1,0,-8,0,14,0,-4,0,0)\), and NetworkX reports that they are non-isomorphic. Since orders 1–7 were already exhaustively covered by the Graph Atlas, this establishes the smallest collision at order 8 for this finite experiment. It remains a finite computational result, not a theorem about arbitrary graph order.
+The manual Ubuntu workflow exhaustively processed all 11,117 connected unlabeled graphs of order 8 and found a first fingerprint collision. Its graph6 witnesses are `G?AFBo` and <code>G?B@&#96;w</code>; they have common degree sequence \((4,3,2,2,2,1,1,1)\), common exact characteristic-polynomial coefficients \((1,0,-8,0,14,0,-4,0,0)\), and NetworkX reports that they are non-isomorphic. Since orders 1–7 were already exhaustively covered by the Graph Atlas, this establishes the smallest collision at order 8 for this finite experiment. It remains a finite computational result, not a theorem about arbitrary graph order.
 
 ## Install and launch
 
