@@ -11,7 +11,7 @@ from visualization import display_value, graph_to_svg
 from graph_sources import detect_geng, iter_connected_graphs
 from collision_search import graph6, search_first_fingerprint_collision
 from reporting import research_report
-from frontier import INVARIANT_REGISTRY, PRESETS, compute_frontier
+from frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
@@ -210,6 +210,20 @@ else:
 
 st.markdown("### Fingerprint Frontier")
 st.caption("How far does your graph fingerprint remain unique? All displayed results are finite exhaustive computations, not statements about arbitrary graph order.")
+comparison_rows = [
+    {
+        "Fingerprint": preset,
+        "Number of invariants": len(PRESETS[preset]),
+        "Exhaustive through": f"n = {result['frontier']}",
+        "First collision": f"n = {result['first_collision_order']}" if result["first_collision_order"] else "Not found in searched domain",
+        "Minimality established": "Yes" if result["minimality_established"] else "No collision found",
+        "Status": "Collision found" if result["first_collision_order"] else "Collision-free in searched domain",
+    }
+    for preset, result in VERIFIED_FRONTIER_RESULTS.items()
+]
+with st.expander("Verified frontier comparison", expanded=False):
+    st.dataframe(comparison_rows, width="stretch", hide_index=True)
+    st.caption("F1–F2 and F10 use Graph Atlas exhaustive results through n=7; F3 uses the existing n=8 witness; F4–F9 were exhaustively computed through n=8 with nauty/geng.")
 frontier_ids = list(INVARIANT_REGISTRY)
 frontier_default = list(PRESETS["F6"])
 selected_frontier = st.multiselect(

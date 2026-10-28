@@ -10,7 +10,8 @@ from scripts import run_fingerprint_search as fingerprint_cli
 from scripts import run_frontier as frontier_cli
 from collision_search import find_collision_in_stream, fingerprint_degree_spectrum, search_first_fingerprint_collision
 from graph_sources import derive_msys2_root, detect_geng, iter_atlas_connected_graphs, iter_geng_connected_graphs, resolve_geng_backend
-from frontier import PRESETS, compute_frontier, find_collision_for_order, fingerprint as frontier_fingerprint
+from frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
+                      find_collision_for_order, fingerprint as frontier_fingerprint)
 
 
 def record(identifier, graph, **values):
@@ -124,6 +125,8 @@ def test_frontier_multiple_invariants_presets_and_json_serialization():
     data = result.as_dict()
     assert data["frontier"] == 1
     assert "finite computational result" in data["disclaimer"]
+    assert VERIFIED_FRONTIER_RESULTS["F4"]["frontier"] == 8
+    assert VERIFIED_FRONTIER_RESULTS["F4"]["first_collision_order"] is None
 
 
 def test_frontier_cli_parsing_and_markdown_report():

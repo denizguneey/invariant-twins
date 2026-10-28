@@ -39,7 +39,8 @@ The Graph Atlas stage has established the following finite results through order
 | F1 | Degree sequence | collision at n=5 (frontier 4) |
 | F2 | A spectrum | collision at n=6 (frontier 5) |
 | F3 | Degree + A | collision-free through n=7; known collision at n=8 |
-| F4–F10 | curated exact combinations | collision-free through n=7 |
+| F4–F9 | curated A/L/Q combinations | collision-free through n=8 (11,117 connected graphs at n=8 each) |
+| F10 | Degree + A + L + Q + Distance | collision-free through n=7 |
 
 Run a reproducible computation locally (orders 1–7 use the Graph Atlas; order 8 or higher requires nauty/Traces `geng`):
 

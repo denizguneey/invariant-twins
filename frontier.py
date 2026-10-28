@@ -28,6 +28,21 @@ PRESETS: dict[str, tuple[str, ...]] = {
     "F10": ("degree_sequence", "adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly", "distance_charpoly"),
 }
 
+# These are reproducible, completed finite computations.  They are display
+# metadata only; new research decisions always run ``compute_frontier``.
+VERIFIED_FRONTIER_RESULTS: dict[str, dict[str, object]] = {
+    "F1": {"frontier": 4, "first_collision_order": 5, "minimality_established": True},
+    "F2": {"frontier": 5, "first_collision_order": 6, "minimality_established": True},
+    "F3": {"frontier": 7, "first_collision_order": 8, "minimality_established": True},
+    "F4": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F5": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F6": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F7": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F8": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F9": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F10": {"frontier": 7, "first_collision_order": None, "minimality_established": False},
+}
+
 
 @dataclass
 class FrontierResult:
