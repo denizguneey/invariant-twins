@@ -28,6 +28,10 @@ Research mode asks where the combined degree-sequence and exact-spectrum fingerp
 
 The order-8 experiment has **not yet been executed** in GitHub Actions. It is configured as a manually triggered, reproducible Ubuntu workflow using nauty `geng`. Its integrity checks require 21 connected unlabeled graphs at order 5 and 11,117 at order 8.
 
+### Computational result
+
+The manual Ubuntu workflow exhaustively processed all 11,117 connected unlabeled graphs of order 8 and found a first fingerprint collision. Its graph6 witnesses are `G?AFBo` and `G?B@\`w`; they have common degree sequence \((4,3,2,2,2,1,1,1)\), common exact characteristic-polynomial coefficients \((1,0,-8,0,14,0,-4,0,0)\), and NetworkX reports that they are non-isomorphic. Since orders 1–7 were already exhaustively covered by the Graph Atlas, this establishes the smallest collision at order 8 for this finite experiment. It remains a finite computational result, not a theorem about arbitrary graph order.
+
 ## Install and launch
 
 ```bash
