@@ -27,6 +27,12 @@ streamlit run app.py
 - Shows deterministic SVG graphs and graph6 witnesses.
 - Computes a finite Fingerprint Frontier with exhaustive-count checks.
 
+## Identify My Graph
+
+`Identify My Graph` starts with a connected five-vertex example that you can edit as a simple undirected graph. Select supported exact invariants to see the complete same-order collision class in the Graph Atlas, receive a deterministic best-next-invariant recommendation, and compute a minimum identifying set for that one graph.
+
+This is different from *Explore Twins*: the former asks which supported invariants identify one chosen graph among the finite comparison domain, while the latter asks where a fingerprint first confuses non-isomorphic graphs. Both are finite computational results, not claims about arbitrary graph orders.
+
 Fingerprint Frontier is the largest graph order exhaustively verified collision-free before the first non-isomorphic fingerprint collision. It is a finite computational notion.
 
 ## Example: two graphs the fingerprint cannot tell apart

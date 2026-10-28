@@ -19,6 +19,8 @@ from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, comput
                       find_collision_for_order, fingerprint as frontier_fingerprint)
 from invariant_twins.frontier_view import verified_rows
 from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, LEARN_SECTIONS, preset_label
+from invariant_twins.identification import candidate_class, graph_fingerprint, minimum_identifying_sets, rank_next_invariants, supported_graph
+from invariant_twins.invariants import INVARIANT_REGISTRY
 
 
 def record(identifier, graph, **values):
@@ -30,6 +32,39 @@ def test_known_nonisomorphic_same_degree_sequence():
     other = nx.disjoint_union(nx.cycle_graph(3), nx.cycle_graph(3))
     assert sorted(dict(graph.degree()).values()) == sorted(dict(other.degree()).values())
     assert not nx.is_isomorphic(graph, other)
+
+
+def test_identification_candidate_class_is_exact_and_relabel_invariant():
+    target = nx.cycle_graph(4)
+    target.add_edge(2, 4)
+    relabelled = nx.relabel_nodes(target, {0: 8, 1: 4, 2: 9, 3: 2, 4: 6})
+    domain = list(iter_atlas_connected_graphs(5))
+    assert supported_graph(target)
+    assert graph_fingerprint(target, ("degree_sequence", "adjacency_charpoly")) == graph_fingerprint(relabelled, ("degree_sequence", "adjacency_charpoly"))
+    assert len(candidate_class(target, (), domain)) == 21
+    assert candidate_class(target, ("degree_sequence",), domain) == candidate_class(relabelled, ("degree_sequence",), domain)
+
+
+def test_identification_recommendations_and_minimum_sets_are_deterministic():
+    target = nx.cycle_graph(4)
+    target.add_edge(2, 4)
+    domain = list(iter_atlas_connected_graphs(5))
+    candidates = candidate_class(target, ("degree_sequence",), domain)
+    ranking = rank_next_invariants(target, candidates, ("degree_sequence",))
+    assert ranking == rank_next_invariants(target, candidates, ("degree_sequence",))
+    assert ranking[0][1] >= ranking[-1][1]
+    names = ("degree_sequence", "triangle_count", "bridge_count", "adjacency_charpoly")
+    solutions = minimum_identifying_sets(target, domain, names)
+    assert solutions
+    assert all(len(candidate_class(target, subset, domain)) == 1 for subset in solutions)
+    assert not any(len(candidate_class(target, subset, domain)) == 1 for subset in __import__("itertools").combinations(names, len(solutions[0]) - 1))
+
+
+def test_identification_rejects_disconnected_or_unsupported_graphs():
+    assert not supported_graph(nx.empty_graph(2))
+    assert not supported_graph(nx.path_graph(8))
+    with __import__("pytest").raises(ValueError):
+        candidate_class(nx.empty_graph(2), (), [])
 
 
 def test_twin_view_graph6_witnesses_and_diameter_paths():

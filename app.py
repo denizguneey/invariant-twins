@@ -14,12 +14,38 @@ from invariant_twins.reporting import research_report
 from invariant_twins import twin_view, frontier_view, learn_view
 from invariant_twins.frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
 from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, preset_label
+from invariant_twins import identification_view
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
-st.title("Can a few graph properties uniquely identify a graph?")
-st.caption("These two graphs are different, but the selected fingerprint cannot tell them apart.")
-st.caption("A research-oriented laboratory for exact finite graph-invariant experiments.")
+brand, navigation, links = st.columns((1.35, 2.7, 1.0))
+with brand:
+    st.markdown("### ◇ Invariant Twins")
+    st.caption("Exploring how graph invariants distinguish graphs")
+with navigation:
+    page = st.radio("Main navigation", ["Explore Twins", "Identify My Graph", "Fingerprint Frontier", "Research"], horizontal=True, label_visibility="collapsed", index=1)
+with links:
+    st.link_button("GitHub", "https://github.com/denizguneey/invariant-twins", width="stretch")
+    st.link_button("Docs", "https://github.com/denizguneey/invariant-twins/tree/main/docs", width="stretch")
+
+if page == "Identify My Graph":
+    identification_view.render()
+    st.stop()
+if page == "Fingerprint Frontier":
+    st.title("Fingerprint Frontier")
+    frontier_view.render()
+    st.stop()
+if page == "Research":
+    st.title("Research")
+    st.caption("Exact arithmetic, finite exhaustive domains, graph6 witnesses, and reproducibility resources.")
+    with st.expander("Method and finite-domain scope", expanded=True):
+        st.write("Graph Atlas covers connected unlabeled graphs through order 7. Higher-order exhaustive experiments use nauty/geng in GitHub Actions. Every reported collision is checked with NetworkX isomorphism, and finite results are not universal theorems.")
+    st.link_button("Read the research archive", "https://github.com/denizguneey/invariant-twins/tree/main/research")
+    st.link_button("Read the mathematical contract", "https://github.com/denizguneey/invariant-twins/blob/main/docs/mathematical-contract.md")
+    st.stop()
+
+st.title("Can this fingerprint distinguish non-isomorphic graphs?")
+st.caption("Explore exact finite graph-invariant collisions and inspect reproducible witnesses.")
 
 
 @st.cache_data(show_spinner=False)
