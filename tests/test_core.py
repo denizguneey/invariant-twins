@@ -1,19 +1,21 @@
 import networkx as nx
 
-from invariant_rules import invariant_redundancies
-from invariants import (adjacency_characteristic_polynomial, distance_characteristic_polynomial,
+from invariant_twins.invariant_rules import invariant_redundancies
+from invariant_twins.invariants import (adjacency_characteristic_polynomial, distance_characteristic_polynomial,
                         evaluate_generalized_characteristic_polynomial,
                         generalized_characteristic_polynomial,
                         laplacian_characteristic_polynomial,
                         signless_laplacian_characteristic_polynomial)
-from search import find_collision_witness, find_minimum_separating_sets, separates_universe
-from visualization import graph_to_svg
+from invariant_twins.search import find_collision_witness, find_minimum_separating_sets, separates_universe
+from invariant_twins.visualization import graph_to_svg
+from invariant_twins.twin_view import (CHARPOLY, G_DIAMETER_PATH, G_EDGES, H_DIAMETER_PATH,
+                       H_EDGES, witnesses)
 from scripts import run_fingerprint_search as fingerprint_cli
 from scripts import run_frontier as frontier_cli
 from scripts import verify_witness
-from collision_search import find_collision_in_stream, fingerprint_degree_spectrum, search_first_fingerprint_collision
-from graph_sources import derive_msys2_root, detect_geng, iter_atlas_connected_graphs, iter_geng_connected_graphs, resolve_geng_backend
-from frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
+from invariant_twins.collision_search import find_collision_in_stream, fingerprint_degree_spectrum, search_first_fingerprint_collision
+from invariant_twins.graph_sources import derive_msys2_root, detect_geng, iter_atlas_connected_graphs, iter_geng_connected_graphs, resolve_geng_backend
+from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
                       find_collision_for_order, fingerprint as frontier_fingerprint)
 
 
@@ -25,6 +27,23 @@ def test_known_nonisomorphic_same_degree_sequence():
     graph = nx.cycle_graph(6)
     other = nx.disjoint_union(nx.cycle_graph(3), nx.cycle_graph(3))
     assert sorted(dict(graph.degree()).values()) == sorted(dict(other.degree()).values())
+    assert not nx.is_isomorphic(graph, other)
+
+
+def test_twin_view_graph6_witnesses_and_diameter_paths():
+    graph, other = witnesses()
+    assert {tuple(sorted(edge)) for edge in graph.edges()} == G_EDGES
+    assert {tuple(sorted(edge)) for edge in other.edges()} == H_EDGES
+    assert nx.is_connected(graph) and nx.is_connected(other)
+    assert graph.number_of_nodes() == other.number_of_nodes() == 8
+    assert graph.number_of_edges() == other.number_of_edges() == 8
+    assert tuple(sorted(dict(graph.degree()).values(), reverse=True)) == tuple(sorted(dict(other.degree()).values(), reverse=True))
+    assert sum(nx.triangles(graph).values()) // 3 == sum(nx.triangles(other).values()) // 3 == 0
+    assert adjacency_characteristic_polynomial(graph) == adjacency_characteristic_polynomial(other) == CHARPOLY
+    assert nx.diameter(graph) == 5 and nx.diameter(other) == 4
+    assert all(graph.has_edge(*edge) for edge in zip(G_DIAMETER_PATH, G_DIAMETER_PATH[1:]))
+    assert all(other.has_edge(*edge) for edge in zip(H_DIAMETER_PATH, H_DIAMETER_PATH[1:]))
+    assert len(G_DIAMETER_PATH) - 1 == nx.diameter(graph) and len(H_DIAMETER_PATH) - 1 == nx.diameter(other)
     assert not nx.is_isomorphic(graph, other)
 
 
@@ -206,7 +225,7 @@ def test_svg_is_deterministic_for_a_fixed_seed():
 
 def test_basic_invariant_values_are_exact_on_a_triangle_with_tail():
     graph = nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)])
-    from invariants import invariant_values
+    from invariant_twins.invariants import invariant_values
     values = invariant_values(graph)
     assert values["Edges"] == 4
     assert values["Degree sequence"] == (3, 2, 2, 1)
@@ -221,7 +240,7 @@ def test_cospectral_fingerprint_uses_exact_characteristic_polynomial():
 
 
 def test_collision_stream_only_accepts_nonisomorphic_graphs(monkeypatch):
-    import collision_search
+    import invariant_twins.collision_search as collision_search
     path = nx.path_graph(4)
     assert find_collision_in_stream([path, nx.relabel_nodes(path, {0: 3, 1: 2, 2: 1, 3: 0})], 4) is None
     monkeypatch.setattr(collision_search, "fingerprint_degree_spectrum", lambda graph: ((0,), (1,)))
@@ -230,7 +249,7 @@ def test_collision_stream_only_accepts_nonisomorphic_graphs(monkeypatch):
 
 
 def test_collision_search_marks_minimality_after_exhaustive_prefix(monkeypatch):
-    import collision_search
+    import invariant_twins.collision_search as collision_search
     monkeypatch.setattr(collision_search, "fingerprint_degree_spectrum", lambda graph: ((0,), (1,)))
     source = lambda order: [nx.path_graph(4), nx.star_graph(3)] if order == 4 else []
     result = search_first_fingerprint_collision(3, 4, source, prefix_exhaustive=True)
@@ -239,7 +258,7 @@ def test_collision_search_marks_minimality_after_exhaustive_prefix(monkeypatch):
 
 
 def test_atlas_source_and_missing_geng_detection_are_graceful(monkeypatch):
-    import graph_sources
+    import invariant_twins.graph_sources as graph_sources
     assert len(list(iter_atlas_connected_graphs(3))) == 2
     monkeypatch.setattr(graph_sources, "KNOWN_GENG_PATHS", ())
     monkeypatch.setattr(graph_sources.shutil, "which", lambda name: None)
@@ -247,7 +266,7 @@ def test_atlas_source_and_missing_geng_detection_are_graceful(monkeypatch):
 
 
 def test_geng_detection_priority(monkeypatch, tmp_path):
-    import graph_sources
+    import invariant_twins.graph_sources as graph_sources
     explicit = tmp_path / "explicit.exe"
     environment = tmp_path / "environment.exe"
     explicit.touch()
@@ -265,7 +284,7 @@ def test_geng_detection_priority(monkeypatch, tmp_path):
 
 def test_geng_graph6_stream_parsing_and_malformed_line_handling(monkeypatch):
     import io
-    import graph_sources
+    import invariant_twins.graph_sources as graph_sources
 
     valid = nx.to_graph6_bytes(nx.path_graph(2), header=False).decode().strip()
     class Process:

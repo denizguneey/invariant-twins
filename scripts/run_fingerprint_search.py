@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from collision_search import FingerprintCollision, fingerprint_degree_spectrum, graph6
+from invariant_twins.collision_search import FingerprintCollision, fingerprint_degree_spectrum, graph6
 
 
 EXPECTED_CONNECTED_COUNTS = {5: 21, 8: 11117}

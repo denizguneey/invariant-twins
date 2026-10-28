@@ -4,14 +4,15 @@ import networkx as nx
 import streamlit as st
 import streamlit.components.v1 as components
 
-from invariant_rules import invariant_redundancies
-from invariants import ALL_INVARIANTS, invariant_values, research_invariant_values
-from search import find_collision_witness, find_minimum_separating_sets, fingerprint, invariant_diagnostics
-from visualization import display_value, graph_to_svg
-from graph_sources import detect_geng, iter_connected_graphs
-from collision_search import graph6, search_first_fingerprint_collision
-from reporting import research_report
-from frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
+from invariant_twins.invariant_rules import invariant_redundancies
+from invariant_twins.invariants import ALL_INVARIANTS, invariant_values, research_invariant_values
+from invariant_twins.search import find_collision_witness, find_minimum_separating_sets, fingerprint, invariant_diagnostics
+from invariant_twins.visualization import display_value, graph_to_svg
+from invariant_twins.graph_sources import detect_geng, iter_connected_graphs
+from invariant_twins.collision_search import graph6, search_first_fingerprint_collision
+from invariant_twins.reporting import research_report
+from invariant_twins import twin_view, frontier_view
+from invariant_twins.frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
@@ -283,3 +284,10 @@ if frontier_result:
 with st.expander("What is the math behind this?"):
     st.latex(r"F_S(G) = (f_1(G), f_2(G), \dots, f_k(G))")
     st.markdown("For your selected invariant set **S**, the app groups graphs by the same fingerprint. A twin pair is a collision where `F_S(G) = F_S(H)` but `G` and `H` are not isomorphic.")
+
+st.markdown("---")
+twin_tab, heatmap_tab = st.tabs(["twin comparison", "frontier heatmap"])
+with twin_tab:
+    twin_view.render()
+with heatmap_tab:
+    frontier_view.render()

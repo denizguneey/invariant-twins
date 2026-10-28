@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from frontier import PRESETS, compute_frontier
-from graph_sources import detect_geng, iter_connected_graphs
+from invariant_twins.frontier import PRESETS, compute_frontier
+from invariant_twins.graph_sources import detect_geng, iter_connected_graphs
 
 
 EXPECTED_CONNECTED_COUNTS = {5: 21, 8: 11117, 9: 261080}

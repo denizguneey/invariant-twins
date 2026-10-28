@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 import networkx as nx
 
-from invariants import adjacency_characteristic_polynomial
+from .invariants import adjacency_characteristic_polynomial
 
 
 def fingerprint_degree_spectrum(graph: nx.Graph) -> tuple[tuple[int, ...], tuple[int, ...]]:

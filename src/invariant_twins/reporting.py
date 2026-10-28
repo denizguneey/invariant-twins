@@ -1,6 +1,6 @@
 """Small reproducibility reports for finite research-mode computations."""
 
-from collision_search import FingerprintCollision
+from .collision_search import FingerprintCollision
 
 
 def research_report(domain: str, graph_count: int, minimum_sets: list[tuple[str, ...]], collision: FingerprintCollision | None) -> str:
@@ -15,7 +15,7 @@ def research_report(domain: str, graph_count: int, minimum_sets: list[tuple[str,
         lines.append(f"- Minimum separating sets: {len(minimum_sets)}")
         lines.extend(f"  - {', '.join(item)}" for item in minimum_sets)
     if collision:
-        from collision_search import graph6
+        from .collision_search import graph6
         lines.extend([
             f"- Fingerprint collision order: {collision.order}",
             f"- Degree sequence: {collision.degree_sequence}",

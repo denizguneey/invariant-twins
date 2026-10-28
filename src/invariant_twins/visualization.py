@@ -27,19 +27,20 @@ def _svg_positions(graph: nx.Graph, seed: int) -> dict[object, tuple[float, floa
     return {node: (x_offset + scale * x, y_offset - scale * y) for node, (x, y) in positions.items()}
 
 
-def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None) -> str:
+def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, node_labels: dict[object, str] | None = None, highlighted_edges: set[frozenset[object]] | None = None) -> str:
     """Return an accessible inline SVG drawing with no image background or axes."""
     positions = _svg_positions(graph, seed)
     description = title or f"Graph, {graph.number_of_nodes()} vertices, {graph.number_of_edges()} edges"
     title_id = f"graph-title-{seed}"
+    highlighted_edges = highlighted_edges or set()
     edges = "".join(
-        f'<line x1="{positions[left][0]:.1f}" y1="{positions[left][1]:.1f}" '
+        f'<line class="{"highlight" if frozenset((left, right)) in highlighted_edges else ""}" x1="{positions[left][0]:.1f}" y1="{positions[left][1]:.1f}" '
         f'x2="{positions[right][0]:.1f}" y2="{positions[right][1]:.1f}" />'
         for left, right in graph.edges()
     )
     nodes = "".join(
         f'<g><circle cx="{x:.1f}" cy="{y:.1f}" r="16" />'
-        f'<text x="{x:.1f}" y="{y:.1f}" dy=".35em">{escape(str(node))}</text></g>'
+        f'<text x="{x:.1f}" y="{y:.1f}" dy=".35em">{escape(node_labels.get(node, str(node)) if node_labels else str(node))}</text></g>'
         for node, (x, y) in positions.items()
     )
     return (
@@ -48,6 +49,7 @@ def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None) -> st
         f'<title id="{title_id}">' + escape(description) + '</title>'
         '<style>'
         'line { stroke: #8b95a5; stroke-width: 1.4; stroke-linecap: round; } '
+        'line.highlight { stroke: #f5c542; stroke-width: 5; } '
         'circle { fill: #4776a8; stroke: #b9d4ef; stroke-width: 1.2; } '
         'text { fill: #ffffff; font: 600 13px system-ui, sans-serif; text-anchor: middle; pointer-events: none; }'
         '</style>'

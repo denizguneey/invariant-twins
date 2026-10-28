@@ -11,8 +11,8 @@ import time
 
 import networkx as nx
 
-from collision_search import graph6
-from invariants import INVARIANT_REGISTRY, compute_invariant
+from .collision_search import graph6
+from .invariants import INVARIANT_REGISTRY, compute_invariant
 
 
 PRESETS: dict[str, tuple[str, ...]] = {

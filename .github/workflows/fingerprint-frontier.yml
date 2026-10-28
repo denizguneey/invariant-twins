@@ -23,14 +23,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -r requirements.txt
+      - run: pip install -e .
       - run: sudo apt-get update && sudo apt-get install -y nauty
       - run: command -v nauty-geng || command -v geng
       - run: |
           generator=$(command -v nauty-geng || command -v geng)
           test "$($generator -cq 5 | sed '/^$/d' | wc -l)" -eq 21
       - run: python scripts/run_frontier.py --preset "${{ inputs.preset }}" --max-order "${{ inputs.max_order }}"
-      - run: PYTHONPATH=. pytest -q
+      - run: pytest -q
       - uses: actions/upload-artifact@v4
         with:
           name: fingerprint-frontier-${{ inputs.preset }}-n${{ inputs.max_order }}
