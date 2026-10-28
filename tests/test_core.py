@@ -93,6 +93,12 @@ def test_identify_component_frontend_bundle_registers():
     assert callable(_identify_workspace())
 
 
+def test_identify_component_bundle_does_not_require_node_process_global():
+    from pathlib import Path
+    bundle = Path(__file__).parents[1] / "src" / "invariant_twins" / "identify_frontend" / "identify-graph.js"
+    assert "process.env.NODE_ENV" not in bundle.read_text(encoding="utf-8")
+
+
 def test_twin_view_graph6_witnesses_and_diameter_paths():
     graph, other = witnesses()
     assert {tuple(sorted(edge)) for edge in graph.edges()} == G_EDGES
