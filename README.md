@@ -66,7 +66,7 @@ This project reproduces and explores finite spectral-graph phenomena with exact 
 
 For orders `n <= 7` the project uses the NetworkX Graph Atlas; for larger exhaustive searches it uses nauty/geng to enumerate connected unlabeled graphs. Run `python scripts/run_frontier.py --preset F6 --max-order 7` for the Atlas stage. Manual GitHub Actions workflows install nauty and validate graph counts before larger runs. Independently verify a collision record with `python scripts/verify_witness.py <result.json>`.
 
-See [reproduction notes](docs/reproducing-results.md), [mathematical background](docs/background.md), [research metadata](research/README.md), [CITATION.cff](CITATION.cff), and [MIT License](LICENSE).
+See [reproduction notes](docs/reproducing-results.md), [deployment notes](docs/deploying.md), [mathematical background](docs/background.md), [research metadata](research/README.md), [CITATION.cff](CITATION.cff), and [MIT License](LICENSE).
 
 ## Limitations and structure
 
