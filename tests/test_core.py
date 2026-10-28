@@ -275,6 +275,15 @@ def test_svg_renderer_is_accessible_and_not_a_raster_image():
     assert "matplotlib" not in svg
 
 
+def test_svg_renderer_handles_empty_and_single_vertex_graphs():
+    empty = graph_to_svg(nx.Graph(), seed=1, title="Empty editor graph")
+    singleton = graph_to_svg(nx.empty_graph(1), seed=2, title="One vertex")
+    edgeless = graph_to_svg(nx.empty_graph(3), seed=3, title="Three isolated vertices")
+    assert "Add a vertex to begin" in empty and empty.count("<circle") == 0
+    assert singleton.count("<circle") == 1
+    assert edgeless.count("<circle") == 3 and edgeless.count("<line") == 0
+
+
 def test_svg_is_deterministic_for_a_fixed_seed():
     graph = nx.path_graph(4)
     assert graph_to_svg(graph, seed=41) == graph_to_svg(graph, seed=41)

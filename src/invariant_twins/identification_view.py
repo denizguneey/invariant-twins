@@ -91,6 +91,19 @@ def render() -> None:
     with editor_col:
         with st.container(border=True):
             _editor(graph)
+    if graph.number_of_nodes() == 0:
+        with invariants_col:
+            with st.container(border=True):
+                st.markdown("#### Invariants")
+                st.info("Add at least one vertex to begin identification.")
+        with result_col:
+            with st.container(border=True):
+                st.markdown("#### Identification")
+                st.info("Add at least one vertex to begin identification.")
+                st.caption("Invariant matching, recommendations, and minimum identifying sets are paused while the editor is empty.")
+        st.markdown("#### Candidate Graphs")
+        st.info("Add a vertex to see finite-domain candidate graphs.")
+        return
     if not supported_graph(graph):
         with invariants_col:
             st.markdown("#### Invariants")

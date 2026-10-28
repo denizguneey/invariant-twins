@@ -12,6 +12,8 @@ SVG_PADDING = 32
 
 def _svg_positions(graph: nx.Graph, seed: int, positions: dict[object, tuple[float, float]] | None = None) -> dict[object, tuple[float, float]]:
     """Scale a seeded NetworkX layout into a compact SVG viewBox."""
+    if graph.number_of_nodes() == 0:
+        return {}
     positions = positions or nx.spring_layout(graph, seed=seed)
     if len(positions) == 1:
         node = next(iter(positions))
@@ -43,6 +45,7 @@ def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, no
         f'<text x="{x:.1f}" y="{y:.1f}" dy=".35em">{escape(node_labels.get(node, str(node)) if node_labels else str(node))}</text></g>'
         for node, (x, y) in positions.items()
     )
+    empty_message = '' if graph.number_of_nodes() else f'<text class="empty" x="{SVG_WIDTH / 2}" y="{SVG_HEIGHT / 2}">Add a vertex to begin</text>'
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
         f'width="100%" height="{height}" role="img" aria-labelledby="{title_id}">'
@@ -51,9 +54,10 @@ def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, no
         'line { stroke: #aeb7c4; stroke-width: 1.8; stroke-linecap: round; } '
         'line.highlight { stroke: #f5c542; stroke-width: 5; } '
         'circle { fill: #4776a8; stroke: #b9d4ef; stroke-width: 1.2; } '
-        'text { fill: #ffffff; font: 600 13px system-ui, sans-serif; text-anchor: middle; pointer-events: none; }'
+        'text { fill: #ffffff; font: 600 13px system-ui, sans-serif; text-anchor: middle; pointer-events: none; } '
+        'text.empty { fill: #64748b; font: 500 16px system-ui, sans-serif; }'
         '</style>'
-        f'{edges}{nodes}</svg>'
+        f'{edges}{nodes}{empty_message}</svg>'
     )
 
 
