@@ -168,6 +168,14 @@ def test_witness_verifier_recomputes_and_rejects_tampering(tmp_path):
         verify_witness.verify_result(path)
 
 
+def test_research_manifest_contains_verified_finite_records():
+    import json
+    from pathlib import Path
+    manifest = json.loads((Path(__file__).parents[1] / "research" / "index.json").read_text(encoding="utf-8"))
+    assert manifest["experiments"][-1]["preset"] == "F9"
+    assert all(record["verification_status"] == "verified" for record in manifest["experiments"])
+
+
 def test_full_family_failure_returns_nonisomorphic_collision_witness():
     records = [record("path", nx.path_graph(4), A=0, B=0), record("star", nx.star_graph(3), A=0, B=0)]
     witness = find_collision_witness(records, ["A", "B"])

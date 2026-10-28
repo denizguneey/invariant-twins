@@ -32,6 +32,9 @@ The Fingerprint Frontier asks how far a chosen finite family of exact invariants
 
 The bundled exact spectral invariants are integer coefficient tuples for characteristic polynomials of the adjacency matrix \(A\), Laplacian \(L=D-A\), signless Laplacian \(Q=D+A\), and, for connected graphs, distance matrix. Research decisions never use rounded numerical eigenvalues. Distance spectrum is exact but comparatively expensive, so it is used only when selected (preset F10).
 
+The generalized characteristic polynomial is represented as exact bivariate integer terms for
+\(\Phi_G(\lambda,t)=\det(\lambda I-A+tD)\). Its specializations are checked exactly: `t=0` gives the adjacency characteristic polynomial, `t=-1` gives the signless-Laplacian characteristic polynomial, and `t=1` is \((-1)^n\) times the Laplacian polynomial evaluated at \(-\lambda\). The existing strong F9 order-9 witness is separated by this generalized invariant.
+
 The Graph Atlas stage has established the following finite results through order 7:
 
 | Preset | Exact fingerprint | finite frontier / first collision |
@@ -51,6 +54,12 @@ python scripts/run_frontier.py --fingerprint degree_sequence,adjacency_charpoly,
 ```
 
 The command writes JSON and Markdown records to `artifacts/`. On GitHub, use the manually dispatched **Fingerprint Frontier Research** workflow, select a preset and maximum order, and download its artifact. It runs on Ubuntu, installs nauty, checks that `geng -cq 5` emits 21 records, and validates the known order-8 total of 11,117 when that order is selected. Ordinary CI never runs this expensive sweep.
+
+Compact metadata for verified experiments is in [`research/`](research/README.md). Recompute a collision witness independently with:
+
+```bash
+python scripts/verify_witness.py <result.json>
+```
 
 Absence of a collision through order \(n\) is a finite computational result, not a proof for arbitrary graph order.
 

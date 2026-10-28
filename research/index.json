@@ -1,0 +1,12 @@
+{
+  "disclaimer": "All records are exhaustive finite computational results, not universal graph-theoretic theorems.",
+  "experiments": [
+    {"preset": "F3", "frontier": 7, "first_collision_order": 8, "exhaustive_through": 8, "workflow_run_id": 40612209065, "verification_status": "verified"},
+    {"preset": "F4", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615828860, "verification_status": "verified"},
+    {"preset": "F5", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615834960, "verification_status": "verified"},
+    {"preset": "F6", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615840862, "verification_status": "verified"},
+    {"preset": "F7", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615846991, "verification_status": "verified"},
+    {"preset": "F8", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615853025, "verification_status": "verified"},
+    {"preset": "F9", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615858813, "verification_status": "verified"}
+  ]
+}
