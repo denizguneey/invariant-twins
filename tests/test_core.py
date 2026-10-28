@@ -17,6 +17,7 @@ from invariant_twins.collision_search import find_collision_in_stream, fingerpri
 from invariant_twins.graph_sources import derive_msys2_root, detect_geng, iter_atlas_connected_graphs, iter_geng_connected_graphs, resolve_geng_backend
 from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
                       find_collision_for_order, fingerprint as frontier_fingerprint)
+from invariant_twins.frontier_view import verified_rows
 
 
 def record(identifier, graph, **values):
@@ -192,8 +193,17 @@ def test_research_manifest_contains_verified_finite_records():
     import json
     from pathlib import Path
     manifest = json.loads((Path(__file__).parents[1] / "research" / "index.json").read_text(encoding="utf-8"))
-    assert manifest["experiments"][-1]["preset"] == "FG"
+    assert any(record["preset"] == "FG" for record in manifest["experiments"])
     assert all(record["verification_status"] == "verified" for record in manifest["experiments"])
+
+
+def test_frontier_view_matches_verified_research_metadata():
+    rows = {row["preset"]: row for row in verified_rows()}
+    assert rows["F1"]["frontier"] == 4 and rows["F1"]["first_collision_order"] == 5
+    assert rows["F2"]["frontier"] == 5 and rows["F2"]["first_collision_order"] == 6
+    assert rows["FG"]["frontier"] == 8 and rows["FG"]["first_collision_order"] == 9
+    assert rows["F4–F9"]["frontier"] == 8 and rows["F4–F9"]["first_collision_order"] == 9
+    assert rows["F10"]["frontier"] == 7 and rows["F10"]["first_collision_order"] is None
 
 
 def test_full_family_failure_returns_nonisomorphic_collision_witness():

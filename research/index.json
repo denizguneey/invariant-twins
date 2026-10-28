@@ -1,6 +1,8 @@
 {
   "disclaimer": "All records are exhaustive finite computational results, not universal graph-theoretic theorems.",
   "experiments": [
+    {"preset": "F1", "label": "F1 · degree sequence", "frontier": 4, "first_collision_order": 5, "exhaustive_through": 5, "verification_status": "verified"},
+    {"preset": "F2", "label": "F2 · adjacency spectrum", "frontier": 5, "first_collision_order": 6, "exhaustive_through": 6, "verification_status": "verified"},
     {"preset": "F3", "frontier": 7, "first_collision_order": 8, "exhaustive_through": 8, "workflow_run_id": 40612209065, "verification_status": "verified"},
     {"preset": "F4", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615828860, "verification_status": "verified"},
     {"preset": "F5", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615834960, "verification_status": "verified"},
@@ -8,6 +10,7 @@
     {"preset": "F7", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615846991, "verification_status": "verified"},
     {"preset": "F8", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615853025, "verification_status": "verified"},
     {"preset": "F9", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40615858813, "verification_status": "verified"},
-    {"preset": "FG", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40618222722, "verification_status": "verified"}
+    {"preset": "FG", "frontier": 8, "first_collision_order": 9, "exhaustive_through": 9, "workflow_run_id": 40618222722, "verification_status": "verified"},
+    {"preset": "F10", "label": "F10 · degree + A + L + Q + distance", "frontier": 7, "first_collision_order": null, "exhaustive_through": 7, "verification_status": "verified"}
   ]
 }

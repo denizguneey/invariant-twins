@@ -53,12 +53,12 @@ The Frontier heatmap uses ✅ for exhaustively collision-free, ❌ for first col
 This project reproduces and explores finite spectral-graph phenomena with exact arithmetic and verifiable witnesses; it does not claim a new theorem.
 
 - C. D. Godsil and B. D. McKay, *Some computational results on the spectra of graphs*, Combinatorial Mathematics IV, Springer LNM 560 (1976), 73–92. Relevant to computational spectral results through order 9.
-- W. H. Haemers and E. Spence, *Enumeration of cospectral graphs*, European Journal of Combinatorics 25 (2004), 199–211. Relevant to cospectral enumeration at orders 10 and 11.
-- A. E. Brouwer and E. Spence, *Cospectral graphs on 12 vertices*, Electronic Journal of Combinatorics 16 (2009), #N20. Relevant to higher-order cospectral enumeration.
+- W. H. Haemers and E. Spence, *Enumeration of cospectral graphs*, European Journal of Combinatorics 25 (2004), 199–211. [DOI](https://doi.org/10.1016/S0195-6698(03)00100-8). Relevant to cospectral enumeration at orders 10 and 11.
+- A. E. Brouwer and E. Spence, *Cospectral Graphs on 12 Vertices*, The Electronic Journal of Combinatorics 16(1) (2009), #N20. [DOI](https://doi.org/10.37236/258). Relevant to higher-order cospectral enumeration.
 - C. Abiad and C. A. Alfaro, *Enumeration of cospectral and coinvariant graphs*, Applied Mathematics and Computation 408 (2021); [arXiv:2008.05786](https://arxiv.org/abs/2008.05786). Relevant to enumeration methodology.
-- M. Aouchiche and P. Hansen, *Cospectrality of graphs with respect to distance matrices*, Applied Mathematics and Computation 325 (2018), 309–321. Relevant to distance spectra.
+- M. Aouchiche and P. Hansen, *Cospectrality of graphs with respect to distance matrices*, Applied Mathematics and Computation 325 (2018), 309–321. [DOI](https://doi.org/10.1016/j.amc.2017.12.025). Relevant to distance spectra.
 - A. D. Bessa, I. C. Rocha-Neto, S. T. R. de Pinho, R. F. S. Andrade, and T. C. Petit Lobao, *Graph Cospectrality using Neighborhood Matrices*, The Electronic Journal of Combinatorics 19(3) (2012), #P23. [DOI](https://doi.org/10.37236/2617). Relevant to combining matrix-based graph information.
-- Chen and Chen, Applied Mathematics and Computation 348 (2019), 456–464. Relevant to the generalized characteristic-polynomial convention used here.
+- Yu Chen and Haiyan Chen, *The characteristic polynomial of a generalized join graph*, Applied Mathematics and Computation 348 (2019), 456–464. [DOI](https://doi.org/10.1016/j.amc.2018.12.013). Relevant to the generalized characteristic-polynomial convention used here.
 - G. Rattan and T. Seppelt, *Weisfeiler–Leman and graph spectra*, SODA 2023; [arXiv:2103.02972](https://arxiv.org/abs/2103.02972). Relevant to spectral invariants and Weisfeiler–Leman.
 - [OEIS A001349](https://oeis.org/A001349). Connected unlabeled graph counts used for exhaustive-count checks.
 
