@@ -220,6 +220,8 @@ def test_geng_detection_priority(monkeypatch, tmp_path):
     monkeypatch.delenv("INVARIANT_TWINS_GENG")
     monkeypatch.setattr(graph_sources.shutil, "which", lambda name: "on-path.exe" if name == "geng" else None)
     assert detect_geng() == "on-path.exe"
+    monkeypatch.setattr(graph_sources.shutil, "which", lambda name: "/usr/bin/nauty-geng" if name == "nauty-geng" else None)
+    assert detect_geng() == "/usr/bin/nauty-geng"
 
 
 def test_geng_graph6_stream_parsing_and_malformed_line_handling(monkeypatch):

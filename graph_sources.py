@@ -36,7 +36,8 @@ def detect_geng(executable_path: str | None = None) -> str | None:
     configured = _valid_executable(os.environ.get("INVARIANT_TWINS_GENG"))
     if configured:
         return configured
-    for name in ("geng", "geng.exe"):
+    # Ubuntu's nauty package commonly installs the executable as nauty-geng.
+    for name in ("geng", "geng.exe", "nauty-geng"):
         found = shutil.which(name)
         if found:
             return found
