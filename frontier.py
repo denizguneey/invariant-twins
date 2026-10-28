@@ -26,6 +26,7 @@ PRESETS: dict[str, tuple[str, ...]] = {
     "F8": ("adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly"),
     "F9": ("degree_sequence", "adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly"),
     "F10": ("degree_sequence", "adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly", "distance_charpoly"),
+    "FG": ("generalized_charpoly",),
 }
 
 # These are reproducible, completed finite computations.  They are display

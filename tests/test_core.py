@@ -2,12 +2,15 @@ import networkx as nx
 
 from invariant_rules import invariant_redundancies
 from invariants import (adjacency_characteristic_polynomial, distance_characteristic_polynomial,
+                        evaluate_generalized_characteristic_polynomial,
+                        generalized_characteristic_polynomial,
                         laplacian_characteristic_polynomial,
                         signless_laplacian_characteristic_polynomial)
 from search import find_collision_witness, find_minimum_separating_sets, separates_universe
 from visualization import graph_to_svg
 from scripts import run_fingerprint_search as fingerprint_cli
 from scripts import run_frontier as frontier_cli
+from scripts import verify_witness
 from collision_search import find_collision_in_stream, fingerprint_degree_spectrum, search_first_fingerprint_collision
 from graph_sources import derive_msys2_root, detect_geng, iter_atlas_connected_graphs, iter_geng_connected_graphs, resolve_geng_backend
 from frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
@@ -89,6 +92,18 @@ def test_exact_spectral_polynomials_are_isomorphism_invariant_and_not_floats():
         assert not any(isinstance(value, float) for value in function(graph))
 
 
+def test_generalized_characteristic_polynomial_specializations_are_exact():
+    graph = nx.path_graph(3)
+    polynomial = generalized_characteristic_polynomial(graph)
+    assert all(isinstance(term, tuple) and len(term) == 3 and all(isinstance(value, int) for value in term) for term in polynomial)
+    assert evaluate_generalized_characteristic_polynomial(polynomial, 0) == adjacency_characteristic_polynomial(graph)
+    assert evaluate_generalized_characteristic_polynomial(polynomial, -1) == signless_laplacian_characteristic_polynomial(graph)
+    expected_laplacian_at_negative_lambda = tuple((-1) ** index * value for index, value in enumerate(laplacian_characteristic_polynomial(graph)))
+    assert evaluate_generalized_characteristic_polynomial(polynomial, 1) == expected_laplacian_at_negative_lambda
+    relabelled = nx.relabel_nodes(graph, {0: 8, 1: 3, 2: 5})
+    assert polynomial == generalized_characteristic_polynomial(relabelled)
+
+
 def test_known_atlas_nonisomorphic_graphs_can_share_an_individual_exact_spectrum():
     graph_a, graph_b, shared, count, exhaustive = find_collision_for_order(
         6, ("adjacency_charpoly",), iter_atlas_connected_graphs
@@ -139,6 +154,18 @@ def test_frontier_cli_parsing_and_markdown_report():
     })
     assert "Fingerprint: F6" in report
     assert "Collision-free through: n=1" in report
+
+
+def test_witness_verifier_recomputes_and_rejects_tampering(tmp_path):
+    graph_a, graph_b, shared, _, _ = find_collision_for_order(6, ("adjacency_charpoly",), iter_atlas_connected_graphs)
+    assert graph_a is not None and graph_b is not None
+    path = tmp_path / "result.json"
+    path.write_text(__import__("json").dumps({"first_collision_order": 6, "graph6_a": nx.to_graph6_bytes(graph_a, header=False).decode().strip(), "graph6_b": nx.to_graph6_bytes(graph_b, header=False).decode().strip(), "invariant_names": ["adjacency_charpoly"], "shared_fingerprint": [list(shared[0])]}), encoding="utf-8")
+    assert verify_witness.verify_result(path)["verified"]
+    path.write_text(path.read_text(encoding="utf-8").replace('"first_collision_order": 6', '"first_collision_order": 5'), encoding="utf-8")
+    import pytest
+    with pytest.raises(ValueError, match="order"):
+        verify_witness.verify_result(path)
 
 
 def test_full_family_failure_returns_nonisomorphic_collision_witness():

@@ -3,6 +3,7 @@
 import networkx as nx
 import numpy as np
 from dataclasses import dataclass
+from fractions import Fraction
 from functools import lru_cache
 from typing import Callable
 
@@ -137,6 +138,63 @@ def distance_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
     return _characteristic_polynomial(_matrix_key(graph, "distance"))
 
 
+def _interpolate_integer_polynomial(values: tuple[int, ...]) -> tuple[int, ...]:
+    """Interpolate values at 0, 1, ... exactly, returning low-degree first."""
+    result = [Fraction(0) for _ in values]
+    for point, value in enumerate(values):
+        basis = [Fraction(1)]
+        denominator = 1
+        for other in range(len(values)):
+            if other == point:
+                continue
+            basis = [Fraction(0)] + basis
+            for index in range(len(basis) - 1):
+                basis[index] -= other * basis[index + 1]
+            denominator *= point - other
+        for index, coefficient in enumerate(basis):
+            result[index] += Fraction(value, denominator) * coefficient
+    if any(coefficient.denominator != 1 for coefficient in result):
+        raise ArithmeticError("generalized characteristic polynomial interpolation was not integral")
+    return tuple(int(coefficient) for coefficient in result)
+
+
+@lru_cache(maxsize=20_000)
+def _generalized_characteristic_polynomial(adjacency_key: tuple[tuple[int, ...], ...]) -> tuple[tuple[int, int, int], ...]:
+    """Compute det(lambda I - A + tD) as exact (lambda power, t power, coefficient) terms."""
+    order = len(adjacency_key)
+    degrees = tuple(sum(row) for row in adjacency_key)
+    # A coefficient of lambda^(n-k) has t-degree at most k.  Interpolating at
+    # 0..n is deliberately simple and exact; caching prevents repeat work.
+    samples = [
+        _characteristic_polynomial(tuple(tuple(adjacency_key[row][column] - (sample * degrees[row] if row == column else 0) for column in range(order)) for row in range(order)))
+        for sample in range(order + 1)
+    ]
+    terms: list[tuple[int, int, int]] = []
+    for coefficient_index in range(order + 1):
+        coefficients = _interpolate_integer_polynomial(tuple(sample[coefficient_index] for sample in samples))
+        lambda_power = order - coefficient_index
+        for t_power, coefficient in enumerate(coefficients):
+            if coefficient:
+                terms.append((lambda_power, t_power, coefficient))
+    return tuple(sorted(terms, reverse=True))
+
+
+def generalized_characteristic_polynomial(graph: nx.Graph) -> tuple[tuple[int, int, int], ...]:
+    """Return exact terms of Phi_G(lambda,t)=det(lambda I-A+tD)."""
+    return _generalized_characteristic_polynomial(_matrix_key(graph, "adjacency"))
+
+
+def evaluate_generalized_characteristic_polynomial(
+    polynomial: tuple[tuple[int, int, int], ...], t_value: int
+) -> tuple[int, ...]:
+    """Specialize Phi(lambda,t) at an integer t, highest lambda degree first."""
+    order = max((lambda_power for lambda_power, _, _ in polynomial), default=0)
+    coefficients = [0] * (order + 1)
+    for lambda_power, t_power, coefficient in polynomial:
+        coefficients[order - lambda_power] += coefficient * t_value**t_power
+    return tuple(coefficients)
+
+
 def degree_sequence(graph: nx.Graph) -> tuple[int, ...]:
     """Return degrees in a canonical descending tuple."""
     return tuple(sorted((degree for _, degree in graph.degree()), reverse=True))
@@ -148,6 +206,7 @@ INVARIANT_REGISTRY: dict[str, InvariantDefinition] = {
     "laplacian_charpoly": InvariantDefinition("laplacian_charpoly", "Exact Laplacian spectrum", True, "moderate", False, laplacian_characteristic_polynomial),
     "signless_laplacian_charpoly": InvariantDefinition("signless_laplacian_charpoly", "Exact signless Laplacian spectrum", True, "moderate", False, signless_laplacian_characteristic_polynomial),
     "distance_charpoly": InvariantDefinition("distance_charpoly", "Exact distance spectrum", True, "expensive", True, distance_characteristic_polynomial),
+    "generalized_charpoly": InvariantDefinition("generalized_charpoly", "Generalized characteristic polynomial", True, "expensive", False, generalized_characteristic_polynomial),
     "triangle_count": InvariantDefinition("triangle_count", "Triangle count", True, "low", False, lambda graph: sum(nx.triangles(graph).values()) // 3),
     "clique_number": InvariantDefinition("clique_number", "Clique number", True, "moderate", False, clique_number),
     "independence_number": InvariantDefinition("independence_number", "Independence number", True, "moderate", False, independence_number),
