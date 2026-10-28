@@ -1,0 +1,4 @@
+streamlit>=1.50
+networkx>=3.5
+numpy>=2.0
+pytest>=8.0

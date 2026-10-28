@@ -1,0 +1,25 @@
+name: Exhaustive fingerprint research
+
+on:
+  workflow_dispatch:
+
+jobs:
+  n8-search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y nauty
+      - run: command -v nauty-geng || command -v geng
+      - run: |
+          generator=$(command -v nauty-geng || command -v geng)
+          test "$($generator -cq 5 | sed '/^$/d' | wc -l)" -eq 21
+      - run: python scripts/run_fingerprint_search.py --order 8
+      - run: pytest -q
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fingerprint-search-n8
+          path: artifacts/fingerprint-search-n8.*

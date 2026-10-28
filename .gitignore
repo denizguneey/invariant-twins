@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/
+artifacts/
+*.report.md
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+.idea/
+.vscode/
+*.swp
+*~
