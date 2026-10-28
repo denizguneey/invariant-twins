@@ -1,7 +1,5 @@
 """Exact and display-oriented graph invariants for the Graph Atlas domain."""
 
-from itertools import permutations
-
 import networkx as nx
 import numpy as np
 
@@ -68,39 +66,23 @@ def adjacency_spectrum(graph: nx.Graph) -> tuple[float, ...]:
     return tuple(float(value) for value in np.round(np.linalg.eigvalsh(matrix), 8))
 
 
-def _permutation_sign(permutation: tuple[int, ...]) -> int:
-    inversions = sum(
-        permutation[left] > permutation[right]
-        for left in range(len(permutation))
-        for right in range(left + 1, len(permutation))
-    )
-    return -1 if inversions % 2 else 1
-
-
 def adjacency_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
     """Return exact coefficients of det(lambda I - A), highest degree first.
 
-    The Graph Atlas limit of seven vertices makes the integer Leibniz
-    expansion small, transparent, and independent of floating point values.
+    Faddeev-LeVerrier computes the coefficients using integer matrix arithmetic,
+    avoiding both floating point values and factorial permutation enumeration.
     """
     nodes = sorted(graph.nodes())
     order = len(nodes)
-    coefficients = [0] * (order + 1)
-    for permutation in permutations(range(order)):
-        fixed_points = 0
-        off_diagonal_count = 0
-        valid = True
-        for row, column in enumerate(permutation):
-            if row == column:
-                fixed_points += 1
-            elif graph.has_edge(nodes[row], nodes[column]):
-                off_diagonal_count += 1
-            else:
-                valid = False
-                break
-        if valid:
-            coefficient = _permutation_sign(permutation) * (-1) ** off_diagonal_count
-            coefficients[order - fixed_points] += coefficient
+    matrix = [[int(graph.has_edge(nodes[row], nodes[column])) for column in range(order)] for row in range(order)]
+    identity = [[int(row == column) for column in range(order)] for row in range(order)]
+    previous = identity
+    coefficients = [1]
+    for degree in range(1, order + 1):
+        product = [[sum(matrix[row][index] * previous[index][column] for index in range(order)) for column in range(order)] for row in range(order)]
+        coefficient = -sum(product[index][index] for index in range(order)) // degree
+        coefficients.append(coefficient)
+        previous = [[product[row][column] + coefficient * identity[row][column] for column in range(order)] for row in range(order)]
     return tuple(coefficients)
 
 
