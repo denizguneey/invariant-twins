@@ -12,6 +12,9 @@ license = {text = "MIT"}
 classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License"]
 dependencies = ["streamlit>=1.50", "networkx>=3.5", "numpy>=2.0"]
 
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
 [project.urls]
 Repository = "https://github.com/denizguneey/invariant-twins"
 
