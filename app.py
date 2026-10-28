@@ -11,13 +11,15 @@ from invariant_twins.visualization import display_value, graph_to_svg
 from invariant_twins.graph_sources import detect_geng, iter_connected_graphs
 from invariant_twins.collision_search import graph6, search_first_fingerprint_collision
 from invariant_twins.reporting import research_report
-from invariant_twins import twin_view, frontier_view
+from invariant_twins import twin_view, frontier_view, learn_view
 from invariant_twins.frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
+from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, preset_label
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
-st.title("🧬 Invariant Twins")
-st.caption("How many graph invariants does it take to identify a graph?")
+st.title("Can a few graph properties uniquely identify a graph?")
+st.caption("These two graphs are different, but the selected fingerprint cannot tell them apart.")
+st.caption("A research-oriented laboratory for exact finite graph-invariant experiments.")
 
 
 @st.cache_data(show_spinner=False)
@@ -70,7 +72,7 @@ def render_graph_svg(graph: nx.Graph, seed: int, title: str) -> None:
 
 
 with st.sidebar:
-    st.header("Search settings")
+    st.header("1. Choose a fingerprint")
     mode = st.radio("Search", ["Smallest twin up to n", "Exact vertex count"], index=0)
     max_n = st.slider("Maximum vertices", 3, 7, 7)
     exact_n = st.slider("Exact vertices", 3, max_n, max_n) if mode == "Exact vertex count" else None
@@ -78,8 +80,13 @@ with st.sidebar:
     for notice in invariant_redundancies(selected):
         st.warning(notice, icon="⚠️")
     st.caption("Vertex count is always matched, so results are not trivial cross-size pairs.")
-    find_clicked = st.button("Find invariant twins", type="primary", width="stretch")
+    find_clicked = st.button("Explore this fingerprint", type="primary", width="stretch")
 
+st.markdown("### Start with a verified collision")
+twin_view.render()
+st.markdown("---")
+st.markdown("## Explore a fingerprint")
+st.caption("1. Choose a fingerprint · 2. See where it first fails · 3. Inspect the collision")
 st.markdown("Choose a set of invariants. The app searches the Graph Atlas for the smallest pair of **non-isomorphic connected graphs** that share all selected values.")
 if not selected:
     st.info("Select at least one invariant to make the experiment meaningful.")
@@ -95,6 +102,7 @@ if selected_for_result and result is None:
     st.success("No twin pair was found in the selected search range.")
     st.caption("That does not prove the invariant set identifies all graphs—only that no collision appeared in this finite atlas search.")
 elif result:
+    st.markdown("### 3. Inspect the collision")
     (id_a, graph_a, values_a), (id_b, graph_b, values_b) = result
     st.success(f"Twin pair found on {graph_a.number_of_nodes()} vertices: Atlas G{id_a} and G{id_b}")
     column_a, column_b = st.columns(2)
@@ -121,7 +129,7 @@ elif result:
     st.caption("Finite search note: this result is a concrete witness inside the Graph Atlas (connected graphs, up to 7 vertices). It is not a proof about graphs of arbitrary size.")
 
 st.markdown("---")
-st.markdown("## Research mode\n### Minimum separating invariant set")
+st.markdown("## Advanced research tools\n### Minimum separating invariant set")
 st.caption("Exact exhaustive subset search over the implemented invariant family; graph order is a free partitioning key.")
 st.caption("Minimum separating set within the implemented invariant family and the finite Graph Atlas search domain.")
 compute_minimum = st.button("Compute minimum separating set")
@@ -178,7 +186,7 @@ st.info("Exhaustively verified collision-free through n = 7 within the NetworkX 
 geng_configured_path = st.text_input("geng executable path (optional)", value=detect_geng() or "")
 geng_path = detect_geng(geng_configured_path or None)
 if geng_path is None:
-    st.caption("Exhaustive search beyond 7 vertices requires nauty/Traces geng.")
+    st.info(HIGHER_ORDER_MESSAGE)
     with st.expander("How to enable exhaustive search beyond n = 7"):
         st.markdown("Install nauty/Traces and make `geng` (or `geng.exe`) available on your PATH, then restart Streamlit. The app never downloads executables automatically.")
 else:
@@ -210,10 +218,11 @@ else:
             st.download_button("Download collision report", research_report(f"Connected graphs through {maximum_collision_order}", collision_result.graphs_examined, [], collision), file_name="fingerprint-collision.md", mime="text/markdown")
 
 st.markdown("### Fingerprint Frontier")
-st.caption("How far does your graph fingerprint remain unique? All displayed results are finite exhaustive computations, not statements about arbitrary graph order.")
+st.caption("Fingerprint frontier: the largest graph order exhaustively verified collision-free before the first non-isomorphic fingerprint collision. All displayed results are finite exhaustive computations, not statements about arbitrary graph order.")
 comparison_rows = [
     {
-        "Fingerprint": preset,
+        "Fingerprint": preset_label(preset),
+        "Preset ID": preset,
         "Number of invariants": len(PRESETS[preset]),
         "Exhaustive through": f"n = {result['frontier']}",
         "First collision": f"n = {result['first_collision_order']}" if result["first_collision_order"] else "Not found in searched domain",
@@ -286,8 +295,8 @@ with st.expander("What is the math behind this?"):
     st.markdown("For your selected invariant set **S**, the app groups graphs by the same fingerprint. A twin pair is a collision where `F_S(G) = F_S(H)` but `G` and `H` are not isomorphic.")
 
 st.markdown("---")
-twin_tab, heatmap_tab = st.tabs(["twin comparison", "frontier heatmap"])
-with twin_tab:
-    twin_view.render()
-with heatmap_tab:
+frontier_tab, learn_tab = st.tabs(["Fingerprint Frontier map", "Learn"])
+with frontier_tab:
     frontier_view.render()
+with learn_tab:
+    learn_view.render()

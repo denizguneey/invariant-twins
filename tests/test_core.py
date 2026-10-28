@@ -9,7 +9,7 @@ from invariant_twins.invariants import (adjacency_characteristic_polynomial, dis
 from invariant_twins.search import find_collision_witness, find_minimum_separating_sets, separates_universe
 from invariant_twins.visualization import graph_to_svg
 from invariant_twins.twin_view import (CHARPOLY, G_DIAMETER_PATH, G_EDGES, H_DIAMETER_PATH,
-                       H_EDGES, witnesses)
+                       H_EDGES, G_POSITIONS, H_POSITIONS, witnesses)
 from scripts import run_fingerprint_search as fingerprint_cli
 from scripts import run_frontier as frontier_cli
 from scripts import verify_witness
@@ -18,6 +18,7 @@ from invariant_twins.graph_sources import derive_msys2_root, detect_geng, iter_a
 from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier,
                       find_collision_for_order, fingerprint as frontier_fingerprint)
 from invariant_twins.frontier_view import verified_rows
+from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, LEARN_SECTIONS, preset_label
 
 
 def record(identifier, graph, **values):
@@ -46,6 +47,7 @@ def test_twin_view_graph6_witnesses_and_diameter_paths():
     assert all(other.has_edge(*edge) for edge in zip(H_DIAMETER_PATH, H_DIAMETER_PATH[1:]))
     assert len(G_DIAMETER_PATH) - 1 == nx.diameter(graph) and len(H_DIAMETER_PATH) - 1 == nx.diameter(other)
     assert not nx.is_isomorphic(graph, other)
+    assert set(G_POSITIONS) == set(graph) and set(H_POSITIONS) == set(other)
 
 
 def test_edges_is_reported_redundant_with_degree_sequence():
@@ -204,6 +206,16 @@ def test_frontier_view_matches_verified_research_metadata():
     assert rows["FG"]["frontier"] == 8 and rows["FG"]["first_collision_order"] == 9
     assert rows["F4–F9"]["frontier"] == 8 and rows["F4–F9"]["first_collision_order"] == 9
     assert rows["F10"]["frontier"] == 7 and rows["F10"]["first_collision_order"] is None
+    assert rows["F4–F9"]["label"] == "A/L/Q combinations (F4–F9, six presets)"
+
+
+def test_reader_facing_preset_labels_and_learn_content_are_available():
+    assert preset_label("F3") == "Degree + adjacency spectrum"
+    assert preset_label("FG") == "Generalized characteristic polynomial"
+    assert preset_label("unknown") == "unknown"
+    assert len(LEARN_SECTIONS) >= 10
+    assert any("collision" in text.lower() for _, text in LEARN_SECTIONS)
+    assert "nauty/geng" in HIGHER_ORDER_MESSAGE
 
 
 def test_full_family_failure_returns_nonisomorphic_collision_witness():

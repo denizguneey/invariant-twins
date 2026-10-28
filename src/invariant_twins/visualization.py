@@ -10,9 +10,9 @@ SVG_HEIGHT = 280
 SVG_PADDING = 32
 
 
-def _svg_positions(graph: nx.Graph, seed: int) -> dict[object, tuple[float, float]]:
+def _svg_positions(graph: nx.Graph, seed: int, positions: dict[object, tuple[float, float]] | None = None) -> dict[object, tuple[float, float]]:
     """Scale a seeded NetworkX layout into a compact SVG viewBox."""
-    positions = nx.spring_layout(graph, seed=seed)
+    positions = positions or nx.spring_layout(graph, seed=seed)
     if len(positions) == 1:
         node = next(iter(positions))
         return {node: (SVG_WIDTH / 2, SVG_HEIGHT / 2)}
@@ -27,9 +27,9 @@ def _svg_positions(graph: nx.Graph, seed: int) -> dict[object, tuple[float, floa
     return {node: (x_offset + scale * x, y_offset - scale * y) for node, (x, y) in positions.items()}
 
 
-def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, node_labels: dict[object, str] | None = None, highlighted_edges: set[frozenset[object]] | None = None) -> str:
+def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, node_labels: dict[object, str] | None = None, highlighted_edges: set[frozenset[object]] | None = None, positions: dict[object, tuple[float, float]] | None = None) -> str:
     """Return an accessible inline SVG drawing with no image background or axes."""
-    positions = _svg_positions(graph, seed)
+    positions = _svg_positions(graph, seed, positions)
     description = title or f"Graph, {graph.number_of_nodes()} vertices, {graph.number_of_edges()} edges"
     title_id = f"graph-title-{seed}"
     highlighted_edges = highlighted_edges or set()
@@ -48,7 +48,7 @@ def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, no
         f'width="100%" height="280" role="img" aria-labelledby="{title_id}">'
         f'<title id="{title_id}">' + escape(description) + '</title>'
         '<style>'
-        'line { stroke: #8b95a5; stroke-width: 1.4; stroke-linecap: round; } '
+        'line { stroke: #aeb7c4; stroke-width: 1.8; stroke-linecap: round; } '
         'line.highlight { stroke: #f5c542; stroke-width: 5; } '
         'circle { fill: #4776a8; stroke: #b9d4ef; stroke-width: 1.2; } '
         'text { fill: #ffffff; font: 600 13px system-ui, sans-serif; text-anchor: middle; pointer-events: none; }'

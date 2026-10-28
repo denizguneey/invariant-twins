@@ -6,6 +6,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from .ui_content import preset_label
+
 COUNTS = [1, 1, 2, 6, 21, 112, 853, 11117, 261080]
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -15,12 +17,12 @@ def verified_rows() -> list[dict[str, object]]:
     records = json.loads((_ROOT / "research" / "index.json").read_text(encoding="utf-8"))["experiments"]
     by_preset = {record["preset"]: record for record in records}
     return [
-        {**by_preset["F1"], "label": "F1 · degree sequence"},
-        {**by_preset["F2"], "label": "F2 · adjacency spectrum"},
-        {**by_preset["F3"], "label": "F3 · degree + A"},
-        {"preset": "F4–F9", "label": "F4–F9 · shared frontier result (6 separate presets)", "frontier": by_preset["F4"]["frontier"], "first_collision_order": by_preset["F4"]["first_collision_order"]},
-        {**by_preset["F10"], "label": "F10 · degree + A + L + Q + distance"},
-        {**by_preset["FG"], "label": "FG · generalized characteristic polynomial"},
+        {**by_preset["F1"], "label": preset_label("F1")},
+        {**by_preset["F2"], "label": preset_label("F2")},
+        {**by_preset["F3"], "label": preset_label("F3")},
+        {"preset": "F4–F9", "label": "A/L/Q combinations (F4–F9, six presets)", "frontier": by_preset["F4"]["frontier"], "first_collision_order": by_preset["F4"]["first_collision_order"]},
+        {**by_preset["F10"], "label": preset_label("F10")},
+        {**by_preset["FG"], "label": preset_label("FG")},
     ]
 
 
@@ -41,7 +43,10 @@ def _message(record: dict[str, object], order: int) -> str:
 def render() -> None:
     """Render selectable status cells without relying on color alone."""
     st.subheader("frontier heatmap")
-    st.caption("select a cell to view its explanation.")
+    st.caption("Fingerprint frontier: the largest graph order exhaustively verified collision-free before the first non-isomorphic fingerprint collision.")
+    with st.expander("How to read this map"):
+        st.markdown("- Each row is a graph fingerprint.\n- Each column is graph order n.\n- ✅ means all graphs at that order were distinguished.\n- ❌ marks the first fingerprint collision.\n- ➖ means not reported in this study.")
+    st.caption("Select a cell to see the finite-search explanation.")
     header = st.columns([3] + [1] * 9 + [1])
     header[0].markdown("**preset**")
     for index, count in enumerate(COUNTS, 1):
