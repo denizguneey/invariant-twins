@@ -34,12 +34,12 @@ VERIFIED_FRONTIER_RESULTS: dict[str, dict[str, object]] = {
     "F1": {"frontier": 4, "first_collision_order": 5, "minimality_established": True},
     "F2": {"frontier": 5, "first_collision_order": 6, "minimality_established": True},
     "F3": {"frontier": 7, "first_collision_order": 8, "minimality_established": True},
-    "F4": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
-    "F5": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
-    "F6": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
-    "F7": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
-    "F8": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
-    "F9": {"frontier": 8, "first_collision_order": None, "minimality_established": False},
+    "F4": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
+    "F5": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
+    "F6": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
+    "F7": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
+    "F8": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
+    "F9": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
     "F10": {"frontier": 7, "first_collision_order": None, "minimality_established": False},
 }
 

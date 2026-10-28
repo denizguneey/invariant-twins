@@ -125,8 +125,7 @@ def test_frontier_multiple_invariants_presets_and_json_serialization():
     data = result.as_dict()
     assert data["frontier"] == 1
     assert "finite computational result" in data["disclaimer"]
-    assert VERIFIED_FRONTIER_RESULTS["F4"]["frontier"] == 8
-    assert VERIFIED_FRONTIER_RESULTS["F4"]["first_collision_order"] is None
+    assert VERIFIED_FRONTIER_RESULTS["F4"] == {"frontier": 8, "first_collision_order": 9, "minimality_established": True}
 
 
 def test_frontier_cli_parsing_and_markdown_report():
