@@ -20,6 +20,7 @@ from invariant_twins.frontier import (PRESETS, VERIFIED_FRONTIER_RESULTS, comput
 from invariant_twins.frontier_view import verified_rows
 from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, LEARN_SECTIONS, preset_label
 from invariant_twins.identification import candidate_class, graph_fingerprint, minimum_identifying_sets, rank_next_invariants, supported_graph
+from invariant_twins.identify_component import _identify_workspace, analyze_state, empty_state, example_state, graph_from_state, normalize_state
 from invariant_twins.invariants import INVARIANT_REGISTRY
 
 
@@ -65,6 +66,31 @@ def test_identification_rejects_disconnected_or_unsupported_graphs():
     assert not supported_graph(nx.path_graph(8))
     with __import__("pytest").raises(ValueError):
         candidate_class(nx.empty_graph(2), (), [])
+
+
+def test_identify_component_rebuilds_graph_from_ids_not_coordinates():
+    state = example_state()
+    moved = {**state, "nodes": [{**node, "x": node["x"] + 99, "y": node["y"] - 31} for node in state["nodes"]]}
+    assert nx.is_isomorphic(graph_from_state(state), graph_from_state(moved))
+    graph = graph_from_state(state)
+    assert graph.number_of_nodes() == 5 and graph.number_of_edges() == 5
+
+
+def test_identify_component_empty_and_disconnected_states_pause_analysis():
+    empty = analyze_state(empty_state())
+    assert not empty["ready"] and "Add at least one vertex" in empty["message"]
+    disconnected = analyze_state({"nodes": [{"id": "A", "x": 1, "y": 1}, {"id": "B", "x": 2, "y": 2}], "edges": [], "selectedInvariants": []})
+    assert not disconnected["ready"] and "Connect all vertices" in disconnected["message"]
+
+
+def test_identify_component_normalizes_invalid_loops_and_duplicate_edges():
+    state = normalize_state({"nodes": [{"id": "A"}, {"id": "B"}], "edges": [{"source": "A", "target": "A"}, {"source": "A", "target": "B"}, {"source": "B", "target": "A"}], "selectedInvariants": ["degree_sequence", "not-real"]})
+    assert state["edges"] == [{"source": "A", "target": "B"}]
+    assert state["selectedInvariants"] == ["degree_sequence"]
+
+
+def test_identify_component_frontend_bundle_registers():
+    assert callable(_identify_workspace())
 
 
 def test_twin_view_graph6_witnesses_and_diameter_paths():

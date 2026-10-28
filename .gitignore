@@ -1,4 +1,5 @@
 .venv/
+frontend/**/node_modules/
 *.egg-info/
 __pycache__/
 *.py[cod]

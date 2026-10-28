@@ -14,7 +14,7 @@ from invariant_twins.reporting import research_report
 from invariant_twins import twin_view, frontier_view, learn_view
 from invariant_twins.frontier import INVARIANT_REGISTRY, PRESETS, VERIFIED_FRONTIER_RESULTS, compute_frontier
 from invariant_twins.ui_content import HIGHER_ORDER_MESSAGE, preset_label
-from invariant_twins import identification_view
+from invariant_twins import identify_component
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
@@ -45,7 +45,7 @@ with links:
     st.link_button("Docs", "https://github.com/denizguneey/invariant-twins/tree/main/docs", width="stretch")
 
 if page == "Identify My Graph":
-    identification_view.render()
+    identify_component.render()
     st.stop()
 if page == "Fingerprint Frontier":
     st.title("Fingerprint Frontier")

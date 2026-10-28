@@ -24,5 +24,8 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+invariant_twins = ["identify_frontend/**/*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
