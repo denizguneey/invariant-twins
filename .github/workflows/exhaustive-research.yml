@@ -18,7 +18,7 @@ jobs:
           generator=$(command -v nauty-geng || command -v geng)
           test "$($generator -cq 5 | sed '/^$/d' | wc -l)" -eq 21
       - run: python scripts/run_fingerprint_search.py --order 8
-      - run: pytest -q
+      - run: PYTHONPATH=. pytest -q
       - uses: actions/upload-artifact@v4
         with:
           name: fingerprint-search-n8
