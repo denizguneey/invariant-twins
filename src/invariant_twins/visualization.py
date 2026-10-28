@@ -27,7 +27,7 @@ def _svg_positions(graph: nx.Graph, seed: int, positions: dict[object, tuple[flo
     return {node: (x_offset + scale * x, y_offset - scale * y) for node, (x, y) in positions.items()}
 
 
-def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, node_labels: dict[object, str] | None = None, highlighted_edges: set[frozenset[object]] | None = None, positions: dict[object, tuple[float, float]] | None = None) -> str:
+def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, node_labels: dict[object, str] | None = None, highlighted_edges: set[frozenset[object]] | None = None, positions: dict[object, tuple[float, float]] | None = None, height: int = 280) -> str:
     """Return an accessible inline SVG drawing with no image background or axes."""
     positions = _svg_positions(graph, seed, positions)
     description = title or f"Graph, {graph.number_of_nodes()} vertices, {graph.number_of_edges()} edges"
@@ -45,7 +45,7 @@ def graph_to_svg(graph: nx.Graph, seed: int = 0, title: str | None = None, *, no
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
-        f'width="100%" height="280" role="img" aria-labelledby="{title_id}">'
+        f'width="100%" height="{height}" role="img" aria-labelledby="{title_id}">'
         f'<title id="{title_id}">' + escape(description) + '</title>'
         '<style>'
         'line { stroke: #aeb7c4; stroke-width: 1.8; stroke-linecap: round; } '

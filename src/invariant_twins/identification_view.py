@@ -87,9 +87,10 @@ def render() -> None:
     st.title("Identify My Graph")
     st.caption("How little information is enough to uniquely identify your graph?")
     st.info("Draw or edit a graph, select invariants, and see how many non-isomorphic connected Graph Atlas graphs of the same order still match. Results are finite-domain results, not universal theorems.")
-    editor_col, invariants_col, result_col = st.columns((1.25, 1, 1.05))
+    editor_col, invariants_col, result_col = st.columns((1.2, .95, 1.05), gap="medium")
     with editor_col:
-        _editor(graph)
+        with st.container(border=True):
+            _editor(graph)
     if not supported_graph(graph):
         with invariants_col:
             st.markdown("#### Invariants")
@@ -100,47 +101,57 @@ def render() -> None:
         return
     values = {key: compute_invariant(graph, key) for key in INVARIANT_REGISTRY}
     with invariants_col:
-        st.markdown("#### Invariants")
-        selected = st.multiselect("Select invariants", list(INVARIANT_REGISTRY), default=st.session_state.identify_selected, format_func=lambda key: INVARIANT_REGISTRY[key].display_name, key="id_invariants")
+        with st.container(border=True):
+            st.markdown("#### Invariants")
+            if st.button("Select all", key="id_select_all"):
+                st.session_state.identify_selected = list(INVARIANT_REGISTRY)
+            selected = []
+            for key, definition in INVARIANT_REGISTRY.items():
+                checked = st.checkbox(definition.display_name, value=key in st.session_state.identify_selected, key=f"id_invariant_{key}", help=str(values[key]))
+                if checked:
+                    selected.append(key)
+                st.caption(display_value(values[key]))
         st.session_state.identify_selected = selected
         st.caption("Exact characteristic-polynomial coefficients are used for spectral comparisons.")
-        st.dataframe([{"Invariant": INVARIANT_REGISTRY[key].display_name, "Current value": display_value(values[key])} for key in selected], width="stretch", hide_index=True)
     domain = _domain(graph.number_of_nodes())
     candidates = candidate_class(graph, selected, domain)
     with result_col:
-        st.markdown("#### Identification")
-        st.metric("Candidates remain", len(candidates), f"out of {len(domain)} non-isomorphic graphs with n = {graph.number_of_nodes()}")
-        eliminated = round(100 * (1 - len(candidates) / len(domain)))
-        st.progress(eliminated, text=f"{eliminated}% eliminated")
-        if len(candidates) == 1:
-            st.success("✅ Graph identified. Within this finite domain, this fingerprint uniquely identifies your graph.")
-        else:
-            st.error("❌ Your current fingerprint does not uniquely identify the graph.")
-            ranking = rank_next_invariants(graph, candidates, selected)
-            if ranking:
-                best, score, remaining = ranking[0]
-                st.markdown(f"**Best next invariant: {INVARIANT_REGISTRY[best].display_name}**")
-                st.caption(f"{len(candidates)} → {remaining} candidates")
-                if st.button(f"Add {INVARIANT_REGISTRY[best].display_name}", key="id_add_best"):
-                    st.session_state.identify_selected = selected + [best]; st.rerun()
+        with st.container(border=True):
+            st.markdown(f"#### Identification · n = {graph.number_of_nodes()}")
+            st.metric("Candidates remain", len(candidates), f"out of {len(domain)} non-isomorphic graphs")
+            eliminated = round(100 * (1 - len(candidates) / len(domain)))
+            st.progress(eliminated, text=f"{eliminated}% eliminated")
+            if len(candidates) == 1:
+                st.success("✅ Graph identified within the stated finite domain.")
+            else:
+                st.error("❌ Your current fingerprint does not uniquely identify the graph.")
+                ranking = rank_next_invariants(graph, candidates, selected)
+                if ranking:
+                    best, score, remaining = ranking[0]
+                    st.info(f"**Best next invariant**\n\n{INVARIANT_REGISTRY[best].display_name}\n\n{len(candidates)} → {remaining} candidates")
+                    if st.button(f"+ Add {INVARIANT_REGISTRY[best].display_name}", key="id_add_best"):
+                        st.session_state.identify_selected = selected + [best]; st.rerun()
+            st.success("**Minimum identifying set for this graph**")
+            if st.button("Compute minimum identifying set", key="id_minimum"):
+                st.session_state.identify_minimum = minimum_identifying_sets(graph, domain)
+            if minimum := st.session_state.get("identify_minimum"):
+                st.write("This graph can be uniquely identified using only:")
+                st.write(" · ".join(INVARIANT_REGISTRY[key].display_name for key in minimum[0]))
     lower_left, lower_right = st.columns((0.32, 1))
     with lower_left:
-        st.markdown("#### Current Fingerprint")
-        st.dataframe([{"Property": "Order (n)", "Value": graph.number_of_nodes()}, {"Property": "Size (m)", "Value": graph.number_of_edges()}, {"Property": "Degree sequence", "Value": degree_sequence(graph)}, {"Property": "Graph6", "Value": _graph6(graph)}], width="stretch", hide_index=True)
-        st.code(_graph6(graph), language=None)
-        if st.button("Compute minimum identifying set", key="id_minimum"):
-            st.session_state.identify_minimum = minimum_identifying_sets(graph, domain)
-        if minimum := st.session_state.get("identify_minimum"):
-            st.success(f"Minimum identifying set: {len(minimum[0])} invariant(s); {len(minimum)} minimum solution(s).")
-            st.write(", ".join(INVARIANT_REGISTRY[key].display_name for key in minimum[0]))
-            st.caption(f"Verified against {len(domain) - 1} other non-isomorphic graphs of order {graph.number_of_nodes()}.")
+        with st.container(border=True):
+            st.markdown("#### Current Fingerprint")
+            st.markdown(f"Order (n) **{graph.number_of_nodes()}**  \nSize (m) **{graph.number_of_edges()}**  \nDegree sequence **{degree_sequence(graph)}**  \nTriangle count **{values['triangle_count']}**")
+            st.caption("Graph6 encoding")
+            st.code(_graph6(graph), language=None)
     with lower_right:
-        st.markdown(f"#### Candidate Graphs ({len(candidates)} non-isomorphic graphs)")
+        st.markdown(f"#### Candidate Graphs · {len(candidates)} non-isomorphic graphs")
         st.caption("Your graph is compared against the full connected Graph Atlas domain for this order; the gallery shows the first 8 matches.")
         cards = st.columns(min(4, max(1, len(candidates))))
         for index, candidate in enumerate(candidates[:8]):
             with cards[index % len(cards)]:
                 title = "Your Graph (G)" if nx.is_isomorphic(candidate, graph) else f"Candidate #{index + 1}"
                 st.markdown(f"**{title}**")
-                components.html(graph_to_svg(candidate, seed=800 + index, title=title), height=160, scrolling=False)
-                st.caption(f"n = {candidate.number_of_nodes()} · m = {candidate.number_of_edges()}\ndeg = {degree_sequence(candidate)}\ngraph6: {_graph6(candidate)}")
+                with st.container(border=True):
+                    components.html(graph_to_svg(candidate, seed=800 + index, title=title, height=130), height=142, scrolling=False)
+                    st.caption(f"{title}\nn = {candidate.number_of_nodes()} · m = {candidate.number_of_edges()}\ndeg = {degree_sequence(candidate)}\ngraph6: {_graph6(candidate)}")
