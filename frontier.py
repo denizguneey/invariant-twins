@@ -42,6 +42,7 @@ VERIFIED_FRONTIER_RESULTS: dict[str, dict[str, object]] = {
     "F8": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
     "F9": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
     "F10": {"frontier": 7, "first_collision_order": None, "minimality_established": False},
+    "FG": {"frontier": 8, "first_collision_order": 9, "minimality_established": True},
 }
 
 

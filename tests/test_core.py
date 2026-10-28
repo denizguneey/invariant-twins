@@ -141,6 +141,7 @@ def test_frontier_multiple_invariants_presets_and_json_serialization():
     assert data["frontier"] == 1
     assert "finite computational result" in data["disclaimer"]
     assert VERIFIED_FRONTIER_RESULTS["F4"] == {"frontier": 8, "first_collision_order": 9, "minimality_established": True}
+    assert VERIFIED_FRONTIER_RESULTS["FG"]["first_collision_order"] == 9
 
 
 def test_frontier_cli_parsing_and_markdown_report():
@@ -172,7 +173,7 @@ def test_research_manifest_contains_verified_finite_records():
     import json
     from pathlib import Path
     manifest = json.loads((Path(__file__).parents[1] / "research" / "index.json").read_text(encoding="utf-8"))
-    assert manifest["experiments"][-1]["preset"] == "F9"
+    assert manifest["experiments"][-1]["preset"] == "FG"
     assert all(record["verification_status"] == "verified" for record in manifest["experiments"])
 
 
