@@ -11,6 +11,7 @@ from visualization import display_value, graph_to_svg
 from graph_sources import detect_geng, iter_connected_graphs
 from collision_search import graph6, search_first_fingerprint_collision
 from reporting import research_report
+from frontier import INVARIANT_REGISTRY, PRESETS, compute_frontier
 
 
 st.set_page_config(page_title="Invariant Twins", page_icon="🧬", layout="wide")
@@ -206,6 +207,64 @@ else:
                 graph_data(collision.graph_b, "collision_graph6_b")
             st.markdown(f"**Order:** {collision.order}  \n**Same degree sequence:** `{collision.degree_sequence}`  \n**Same exact adjacency characteristic polynomial:** `{collision.characteristic_polynomial}`  \n**NetworkX isomorphic:** False  \n**Minimality established:** {'YES' if collision.minimality_established else 'NO'}")
             st.download_button("Download collision report", research_report(f"Connected graphs through {maximum_collision_order}", collision_result.graphs_examined, [], collision), file_name="fingerprint-collision.md", mime="text/markdown")
+
+st.markdown("### Fingerprint Frontier")
+st.caption("How far does your graph fingerprint remain unique? All displayed results are finite exhaustive computations, not statements about arbitrary graph order.")
+frontier_ids = list(INVARIANT_REGISTRY)
+frontier_default = list(PRESETS["F6"])
+selected_frontier = st.multiselect(
+    "Exact invariants in the frontier fingerprint",
+    frontier_ids,
+    default=frontier_default,
+    format_func=lambda name: INVARIANT_REGISTRY[name].display_name,
+    key="frontier_invariants",
+)
+frontier_max = st.slider("Frontier maximum order", 1, 8 if geng_path else 7, 7, key="frontier_max")
+if any(INVARIANT_REGISTRY[name].cost_class == "expensive" for name in selected_frontier):
+    st.caption("Distance spectrum is exact but comparatively expensive; it is included only when selected.")
+if st.button("Compute Fingerprint Frontier"):
+    if not selected_frontier:
+        st.warning("Select at least one exact invariant.")
+    elif frontier_max >= 8 and geng_path is None:
+        st.warning("Order 8 requires nauty/Traces geng.")
+    else:
+        try:
+            with st.spinner("Exhaustively checking orders in increasing order…"):
+                frontier_result = compute_frontier(
+                    selected_frontier,
+                    1,
+                    frontier_max,
+                    lambda order: iter_connected_graphs(order, geng_path),
+                )
+            st.session_state.frontier_result = frontier_result
+            st.session_state.frontier_label = next((name for name, members in PRESETS.items() if members == tuple(selected_frontier)), "Custom")
+        except (FileNotFoundError, RuntimeError, ValueError, nx.NetworkXError) as error:
+            st.error(f"The finite frontier search could not complete: {error}")
+
+frontier_result = st.session_state.get("frontier_result")
+if frontier_result:
+    label = st.session_state.get("frontier_label", "Custom")
+    summary = {
+        "Fingerprint": label,
+        "Number of invariants": len(frontier_result.invariant_names),
+        "Exhaustive through": f"n = {frontier_result.frontier}" if frontier_result.frontier is not None else "Not established",
+        "First collision": f"n = {frontier_result.first_collision_order}" if frontier_result.first_collision_order else "Not yet found",
+        "Minimality established": "Yes" if frontier_result.minimality_established else "No",
+        "Status": "Collision found" if frontier_result.first_collision_order else "Collision-free in searched domain",
+    }
+    st.dataframe([summary], width="stretch", hide_index=True)
+    if frontier_result.first_collision_order:
+        st.error(f"First verified collision at n = {frontier_result.first_collision_order}")
+        left, right = st.columns(2)
+        with left:
+            render_graph_svg(frontier_result.graph_a, 901, f"Frontier graph A, {frontier_result.first_collision_order} vertices")
+            graph_data(frontier_result.graph_a, "frontier_graph6_a")
+        with right:
+            render_graph_svg(frontier_result.graph_b, 902, f"Frontier graph B, {frontier_result.first_collision_order} vertices")
+            graph_data(frontier_result.graph_b, "frontier_graph6_b")
+        st.write(f"Shared exact fingerprint: `{frontier_result.shared_fingerprint}`  \\n+NetworkX isomorphic: `{frontier_result.isomorphic}`  \\n+Minimality established: `{'Yes' if frontier_result.minimality_established else 'No'}`")
+    else:
+        st.info(f"Collision-free through n = {frontier_result.frontier} in this finite exhaustive search.")
 
 with st.expander("What is the math behind this?"):
     st.latex(r"F_S(G) = (f_1(G), f_2(G), \dots, f_k(G))")

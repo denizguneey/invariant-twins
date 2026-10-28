@@ -1,7 +1,10 @@
-"""Exact and display-oriented graph invariants for the Graph Atlas domain."""
+"""Exact and display-oriented graph invariants for finite graph experiments."""
 
 import networkx as nx
 import numpy as np
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Callable
 
 
 ALL_INVARIANTS = [
@@ -16,6 +19,18 @@ ALL_INVARIANTS = [
     "Bridge count",
     "Adjacency spectrum",
 ]
+
+
+@dataclass(frozen=True)
+class InvariantDefinition:
+    """Metadata and exact computation for one reusable graph invariant."""
+
+    id: str
+    display_name: str
+    exact: bool
+    cost_class: str
+    requires_connected: bool
+    compute: Callable[[nx.Graph], object]
 
 
 def clique_number(graph: nx.Graph) -> int:
@@ -66,15 +81,31 @@ def adjacency_spectrum(graph: nx.Graph) -> tuple[float, ...]:
     return tuple(float(value) for value in np.round(np.linalg.eigvalsh(matrix), 8))
 
 
-def adjacency_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
-    """Return exact coefficients of det(lambda I - A), highest degree first.
-
-    Faddeev-LeVerrier computes the coefficients using integer matrix arithmetic,
-    avoiding both floating point values and factorial permutation enumeration.
-    """
+def _matrix_key(graph: nx.Graph, kind: str) -> tuple[tuple[int, ...], ...]:
+    """Return a canonical integer matrix for an exact spectral invariant."""
     nodes = sorted(graph.nodes())
     order = len(nodes)
-    matrix = [[int(graph.has_edge(nodes[row], nodes[column])) for column in range(order)] for row in range(order)]
+    adjacency = [[int(graph.has_edge(nodes[row], nodes[column])) for column in range(order)] for row in range(order)]
+    if kind == "adjacency":
+        return tuple(tuple(row) for row in adjacency)
+    degrees = [sum(row) for row in adjacency]
+    if kind == "laplacian":
+        return tuple(tuple((degrees[row] if row == column else 0) - adjacency[row][column] for column in range(order)) for row in range(order))
+    if kind == "signless_laplacian":
+        return tuple(tuple((degrees[row] if row == column else 0) + adjacency[row][column] for column in range(order)) for row in range(order))
+    if kind == "distance":
+        if order and not nx.is_connected(graph):
+            raise nx.NetworkXError("distance characteristic polynomial requires a connected graph")
+        distances = dict(nx.all_pairs_shortest_path_length(graph))
+        return tuple(tuple(int(distances[nodes[row]][nodes[column]]) for column in range(order)) for row in range(order))
+    raise ValueError(f"unknown matrix kind: {kind}")
+
+
+@lru_cache(maxsize=200_000)
+def _characteristic_polynomial(matrix_key: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
+    """Return det(lambda I - M) with exact Faddeev--LeVerrier arithmetic."""
+    order = len(matrix_key)
+    matrix = [list(row) for row in matrix_key]
     identity = [[int(row == column) for column in range(order)] for row in range(order)]
     previous = identity
     coefficients = [1]
@@ -86,9 +117,56 @@ def adjacency_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
     return tuple(coefficients)
 
 
+def adjacency_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
+    """Return exact coefficients of det(lambda I - A), highest degree first."""
+    return _characteristic_polynomial(_matrix_key(graph, "adjacency"))
+
+
+def laplacian_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
+    """Return exact coefficients of det(lambda I - (D - A))."""
+    return _characteristic_polynomial(_matrix_key(graph, "laplacian"))
+
+
+def signless_laplacian_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
+    """Return exact coefficients of det(lambda I - (D + A))."""
+    return _characteristic_polynomial(_matrix_key(graph, "signless_laplacian"))
+
+
+def distance_characteristic_polynomial(graph: nx.Graph) -> tuple[int, ...]:
+    """Return exact coefficients of the connected graph distance matrix."""
+    return _characteristic_polynomial(_matrix_key(graph, "distance"))
+
+
+def degree_sequence(graph: nx.Graph) -> tuple[int, ...]:
+    """Return degrees in a canonical descending tuple."""
+    return tuple(sorted((degree for _, degree in graph.degree()), reverse=True))
+
+
+INVARIANT_REGISTRY: dict[str, InvariantDefinition] = {
+    "degree_sequence": InvariantDefinition("degree_sequence", "Degree sequence", True, "low", False, degree_sequence),
+    "adjacency_charpoly": InvariantDefinition("adjacency_charpoly", "Exact adjacency spectrum", True, "moderate", False, adjacency_characteristic_polynomial),
+    "laplacian_charpoly": InvariantDefinition("laplacian_charpoly", "Exact Laplacian spectrum", True, "moderate", False, laplacian_characteristic_polynomial),
+    "signless_laplacian_charpoly": InvariantDefinition("signless_laplacian_charpoly", "Exact signless Laplacian spectrum", True, "moderate", False, signless_laplacian_characteristic_polynomial),
+    "distance_charpoly": InvariantDefinition("distance_charpoly", "Exact distance spectrum", True, "expensive", True, distance_characteristic_polynomial),
+    "triangle_count": InvariantDefinition("triangle_count", "Triangle count", True, "low", False, lambda graph: sum(nx.triangles(graph).values()) // 3),
+    "clique_number": InvariantDefinition("clique_number", "Clique number", True, "moderate", False, clique_number),
+    "independence_number": InvariantDefinition("independence_number", "Independence number", True, "moderate", False, independence_number),
+    "chromatic_number": InvariantDefinition("chromatic_number", "Chromatic number", True, "expensive", False, chromatic_number_exact),
+    "bridge_count": InvariantDefinition("bridge_count", "Bridge count", True, "low", False, lambda graph: len(list(nx.bridges(graph)))),
+}
+
+
+def compute_invariant(graph: nx.Graph, invariant_id: str) -> object:
+    """Compute a registered invariant, enforcing its graph-domain requirement."""
+    definition = INVARIANT_REGISTRY[invariant_id]
+    if definition.requires_connected and graph.number_of_nodes() and not nx.is_connected(graph):
+        raise nx.NetworkXError(f"{definition.display_name} requires a connected graph")
+    return definition.compute(graph)
+
+
 def invariant_values(graph: nx.Graph) -> dict[str, object]:
     """Return values used in the standard twin-analysis UI."""
-    degrees = tuple(sorted((degree for _, degree in graph.degree()), reverse=True))
+    degrees = degree_sequence(graph)
     return {
         "Edges": graph.number_of_edges(),
         "Degree sequence": degrees,
