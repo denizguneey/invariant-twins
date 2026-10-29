@@ -1,0 +1,67 @@
+{
+  "name": "tldts-core",
+  "version": "7.4.20",
+  "description": "tldts core primitives (internal module)",
+  "author": {
+    "name": "Rémi Berson"
+  },
+  "contributors": [
+    "Alexei <alexeiatyahoodotcom@gmail.com>",
+    "Alexey <kureev-mail@ya.ru>",
+    "Andrew <chefandrew@seomoz.org>",
+    "Johannes Ewald <johannes.ewald@peerigon.com>",
+    "Jérôme Desboeufs <jerome.desboeufs@gmail.com>",
+    "Kelly Campbell <kelly.a.campbell@gmail.com>",
+    "Kiko Beats <josefrancisco.verdu@gmail.com>",
+    "Kris Reeves <krisreeves@searchfanatics.com>",
+    "Krzysztof Jan Modras <chrmod@chrmod.net>",
+    "Olivier Melcher <olivier.melcher@gmail.com>",
+    "Rémi Berson <remi.berson@pm.me>",
+    "Saad Rashid <srashid@lendinghome.com>",
+    "Thomas Parisot <hi@oncletom.io>",
+    "Timo Tijhof <krinklemail@gmail.com>",
+    "Xavier Damman <xdamman@gmail.com>",
+    "Yehezkiel Syamsuhadi <yehezkielbs@gmail.com>"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/remusao/tldts#readme",
+  "bugs": {
+    "url": "https://github.com/remusao/tldts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/remusao/tldts.git"
+  },
+  "main": "dist/cjs/index.js",
+  "module": "dist/es6/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "index.ts"
+  ],
+  "scripts": {
+    "clean": "rimraf dist coverage",
+    "build": "tsc --build ./tsconfig.json",
+    "bundle": "tsc --build ./tsconfig.bundle.json && rollup --config ./rollup.config.mjs",
+    "prepack": "yarn run bundle",
+    "test": "c8 ../../node_modules/.bin/mocha --config ../../.mocharc.cjs"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.6.2",
+    "c8": "^12.0.0",
+    "chai": "^6.2.2",
+    "mocha": "^12.0.2",
+    "rimraf": "^6.1.2",
+    "rollup": "^4.63.4",
+    "rollup-plugin-sourcemaps2": "^0.5.8",
+    "typescript": "^6.0.3"
+  },
+  "gitHead": "8eeda26721202c74b924559359f743bd44fb7593"
+}
