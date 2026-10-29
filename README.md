@@ -1,109 +1,135 @@
 # Invariant Twins
 
-[![CI](https://github.com/denizguneey/invariant-twins/actions/workflows/tests.yml/badge.svg)](https://github.com/denizguneey/invariant-twins/actions/workflows/tests.yml) [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](pyproject.toml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Invariant Twins is an interactive research application for studying how selected exact graph invariants distinguish finite, simple, connected graphs. It combines a React + FastAPI application with reproducible finite-domain data, exact arithmetic, and verifiable non-isomorphic witnesses.
 
-An interactive, exact-arithmetic laboratory for finite graph-invariant fingerprints and reproducible non-isomorphic witnesses.
+## What the project does
 
-Birincil arayüz: React + FastAPI web uygulaması. Yeni geliştirme bu arayüzü hedefler.
+### Identify My Graph
 
-Streamlit uygulaması **Legacy arayüz** olarak korunur; henüz silinmemiştir.
+Draw a graph, select invariants, and compare its fingerprint against a finite same-order universe. The application reports non-isomorphic rivals with the same fingerprint, the exact rival count, candidate previews, a useful next-invariant recommendation, and (where supported) a minimum identifying invariant set.
 
-Can a few numerical properties of a graph uniquely identify it? If not, what is the first pair of different graphs that those properties confuse?
+### Explore Twins
 
+Find two non-isomorphic graphs sharing a selected fingerprint, inspect their graph6 encodings, and view an invariant that separates them.
 
-## Birincil web uygulaması (React + FastAPI)
+### Fingerprint Frontier
 
-```bash
+Browse archived finite-order collision/frontier results for selected invariant families. These research records are distinct from live application support.
+
+### Research
+
+Read the methodology, finite-domain assumptions, data provenance, and reproducibility notes.
+
+## Mathematical model
+
+For a graph `G` and an invariant set `S`, the fingerprint is
+
+`F_S(G) = (I(G)) for I in S`.
+
+A collision occurs when `F_S(G) = F_S(H)` for non-isomorphic graphs `G` and `H`. Every result is interpreted only within its stated finite universe.
+
+For one target graph, each invariant distinguishes a set of its non-isomorphic rivals. Finding the smallest invariant subset that distinguishes all rivals is a target-specific **Set Cover** problem. With the current 11 invariant families, exhaustive subset search considers at most `2^11 = 2048` subsets and is exact where enabled.
+
+This differs from the global pair-separation problem: finding a smallest family that separates every non-isomorphic pair in an entire universe is a Test Cover-style research problem. It is not the same feature and is not currently implemented as a live mode.
+
+## Supported invariant family
+
+The application uses 11 exact invariant families:
+
+- Degree sequence
+- Triangle count
+- Bridge count
+- Clique number
+- Independence number
+- Chromatic number
+- Adjacency characteristic polynomial
+- Laplacian characteristic polynomial
+- Signless Laplacian characteristic polynomial
+- Distance characteristic polynomial
+- Generalized characteristic polynomial
+
+Spectral comparisons use exact characteristic-polynomial coefficients, not rounded floating-point eigenvalues.
+
+## Finite graph domains
+
+### n <= 7
+
+The application uses the NetworkX Graph Atlas for the complete connected simple, non-isomorphic domain at supported orders.
+
+### n = 8
+
+The application uses Brendan McKay's connected simple graph catalogue: 11,117 connected simple non-isomorphic graphs. McKay supplies graph structures; Invariant Twins computes and stores its own invariant values in a verified local SQLite index.
+
+Queries are local and offline. Runtime requests do not reconstruct or recompute the complete 11,117-graph catalogue. Live n=9 support does not exist.
+
+## n=8 indexed architecture
+
+`graph catalogue -> invariant precomputation -> verified SQLite index -> indexed fingerprint query`
+
+Before n=8 queries are served, the index validates ready state, source checksum, graph count, invariant completeness, and schema/serialization compatibility.
+
+## Performance
+
+Local indexed n=8 benchmarks measured common Identify fingerprints at approximately 0.08-0.15 seconds. These are local measurements, not universal guarantees.
+
+## Installation and running
+
+Windows-oriented setup:
+
+```powershell
+git clone https://github.com/denizguneey/invariant-twins.git
+cd invariant-twins
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+.\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[test]"
-cd web/frontend
+cd web\frontend
 npm install
-npm run test
 npm run build
-
-cd ../..
+cd ..\..
 python -m invariant_twins.web
 ```
 
-Ardından `http://127.0.0.1:8000` adresini açın. Geliştirme sırasında Vite
-sunucusu için `npm run dev`, Python testleri için
-`python -m pytest -q` kullanılır.
+Open `http://127.0.0.1:8000`:
 
-## Legacy arayüz (Streamlit)
+- `/` Explore Twins
+- `/tanimla` Identify My Graph
+- `/sinir` Fingerprint Frontier
+- `/arastirma` Research
 
-```bash
-streamlit run app.py
-```
-
-## What it does
-
-- Selects exact invariant families and searches finite connected-graph domains for collisions.
-- Uses integer characteristic-polynomial coefficients rather than rounded eigenvalues.
-- Checks witness pairs with NetworkX isomorphism.
-- Shows deterministic SVG graphs and graph6 witnesses.
-- Computes a finite Fingerprint Frontier with exhaustive-count checks.
-
-## Identify My Graph
-
-The runtime domain is intentionally split: `n ≤ 7` uses the NetworkX Graph
-Atlas, while `n = 8` uses McKay's complete connected catalogue through an
-Invariant Twins-generated, verified local SQLite invariant index.  McKay
-supplies graph structures; invariant values are computed by this project
-offline.  Web requests never generate a missing n=8 index.
-
-`Identify My Graph` starts with a connected five-vertex example that you can edit as a simple undirected graph. Select supported exact invariants to see the complete same-order collision class in the Graph Atlas, receive a deterministic best-next-invariant recommendation, and compute a minimum identifying set for that one graph.
-
-This is different from *Explore Twins*: the former asks which supported invariants identify one chosen graph among the finite comparison domain, while the latter asks where a fingerprint first confuses non-isomorphic graphs. Both are finite computational results, not claims about arbitrary graph orders.
-
-Fingerprint Frontier is the largest graph order exhaustively verified collision-free before the first non-isomorphic fingerprint collision. It is a finite computational notion.
-
-## Example: two graphs the fingerprint cannot tell apart
-
-`G = G?AFBo` and <code>H = G?B@&#96;w</code> are connected graphs with 8 vertices, 8 edges, and triangle count 0. They have the same degree sequence `(4,3,2,2,2,1,1,1)` and exact adjacency characteristic-polynomial coefficients `[1, 0, -8, 0, 14, 0, -4, 0, 0]`, yet `nx.is_isomorphic(G, H)` is false. Their diameters are `G = 5` and `H = 4`. Same fingerprint does not mean same graph.
-
-![Twin comparison of two non-isomorphic graphs with matching selected invariants](docs/images/twin-comparison.png)
-
-## Results (finite domain)
-
-| Fingerprint | Verified outcome | Frontier |
-| --- | --- | ---: |
-| F1 degree sequence | first collision at n=5 | 4 |
-| F2 adjacency spectrum | first collision at n=6 | 5 |
-| F3 degree + adjacency spectrum | first collision at n=8 | 7 |
-| F4–F9 A/L/Q combinations | first collision at n=9; 261,080 graphs examined | 8 |
-| F10 degree + A + L + Q + distance | collision-free through n=7; beyond not reported | ≥7 |
-| FG generalized characteristic polynomial | collision-free through n=8; first collision at n=9; 261,080 graphs examined | 8 |
-
-The Frontier heatmap uses ✅ for exhaustively collision-free, ❌ for first collision, and ➖ for not reported; color is not the only signal. All outcomes are finite computational results for the enumerated domain, not universal graph-theoretic theorems.
-
-![Fingerprint Frontier heatmap showing finite collision status by order](docs/images/frontier-heatmap.png)
-
-## Related work
-
-This project reproduces and explores finite spectral-graph phenomena with exact arithmetic and verifiable witnesses; it does not claim a new theorem.
-
-- C. D. Godsil and B. D. McKay, *Some computational results on the spectra of graphs*, Combinatorial Mathematics IV, Springer LNM 560 (1976), 73–92. Relevant to computational spectral results through order 9.
-- W. H. Haemers and E. Spence, *Enumeration of cospectral graphs*, European Journal of Combinatorics 25 (2004), 199–211. [DOI](https://doi.org/10.1016/S0195-6698(03)00100-8). Relevant to cospectral enumeration at orders 10 and 11.
-- A. E. Brouwer and E. Spence, *Cospectral Graphs on 12 Vertices*, The Electronic Journal of Combinatorics 16(1) (2009), #N20. [DOI](https://doi.org/10.37236/258). Relevant to higher-order cospectral enumeration.
-- C. Abiad and C. A. Alfaro, *Enumeration of cospectral and coinvariant graphs*, Applied Mathematics and Computation 408 (2021); [arXiv:2008.05786](https://arxiv.org/abs/2008.05786). Relevant to enumeration methodology.
-- M. Aouchiche and P. Hansen, *Cospectrality of graphs with respect to distance matrices*, Applied Mathematics and Computation 325 (2018), 309–321. [DOI](https://doi.org/10.1016/j.amc.2017.12.025). Relevant to distance spectra.
-- A. D. Bessa, I. C. Rocha-Neto, S. T. R. de Pinho, R. F. S. Andrade, and T. C. Petit Lobao, *Graph Cospectrality using Neighborhood Matrices*, The Electronic Journal of Combinatorics 19(3) (2012), #P23. [DOI](https://doi.org/10.37236/2617). Relevant to combining matrix-based graph information.
-- Yu Chen and Haiyan Chen, *The characteristic polynomial of a generalized join graph*, Applied Mathematics and Computation 348 (2019), 456–464. [DOI](https://doi.org/10.1016/j.amc.2018.12.013). Relevant to the generalized characteristic-polynomial convention used here.
-- G. Rattan and T. Seppelt, *Weisfeiler–Leman and graph spectra*, SODA 2023; [arXiv:2103.02972](https://arxiv.org/abs/2103.02972). Relevant to spectral invariants and Weisfeiler–Leman.
-- [OEIS A001349](https://oeis.org/A001349). Connected unlabeled graph counts used for exhaustive-count checks.
-
-## Reproducing results
-
-For orders `n <= 7` the project uses the NetworkX Graph Atlas; for larger exhaustive searches it uses nauty/geng to enumerate connected unlabeled graphs. Run `python scripts/run_frontier.py --preset F6 --max-order 7` for the Atlas stage. Manual GitHub Actions workflows install nauty and validate graph counts before larger runs. Independently verify a collision record with `python scripts/verify_witness.py <result.json>`.
-
-See [reproduction notes](docs/reproducing-results.md), [deployment notes](docs/deploying.md), [mathematical background](docs/background.md), [research metadata](research/README.md), [CITATION.cff](CITATION.cff), and [MIT License](LICENSE).
-
-## Limitations and structure
-
-The repository does not claim novelty or a theorem. Results apply only to their stated finite search bounds. Reusable code is in `src/invariant_twins/`; command-line tools are in `scripts/`; compact verified metadata is in `research/`.
+The Streamlit application remains in the repository as a legacy interface.
 
 ## Tests
 
-Run `python -m pytest -q`.
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+cd web\frontend
+npm run test
+npm run build
+```
+
+## Data and reproducibility
+
+- `data/connected/n8.g6` is the n=8 graph6 catalogue.
+- `data/connected/n8_invariants.sqlite` is the verified local invariant index.
+- `scripts/build_n8_index.py --status` reports index completeness and ready status.
+- `scripts/build_n8_index.py --validate` validates the index.
+- graph6 stores compact graph structures used for reproducible witnesses.
+
+The catalogue attribution and checksum are documented in `data/connected/README.md`. Reproduction and mathematical notes are in `docs/`, and citation metadata is provided in `CITATION.cff`.
+
+## Limitations
+
+- Results apply only to their stated finite domains.
+- The n=8 minimum identifying set is explicitly unavailable in the UI.
+- There is no live n=9 support.
+- The invariant family is finite.
+- A fingerprint collision means the selected invariants do not distinguish two graphs; it does not mean the graphs are isomorphic.
+- Archived frontier records and live application support are separate concepts.
+
+## Roadmap
+
+Possible future research directions include canonical graph identity/graph6 integration, discrimination-power curves, richer rival explanations, weighted identifying invariant sets, selectable subuniverses, n=9 indexed architecture, and a global Test Cover-style separating-family mode.
+
+## License
+
+This project is released under the [MIT License](LICENSE).
