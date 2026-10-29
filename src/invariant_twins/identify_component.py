@@ -38,12 +38,12 @@ def example_state() -> dict[str, Any]:
             {"source": "C", "target": "D"}, {"source": "D", "target": "A"},
             {"source": "C", "target": "E"},
         ],
-        "selectedInvariants": list(DEFAULT_INVARIANTS),
+        "selectedInvariants": list(DEFAULT_INVARIANTS), "revision": 0,
     }
 
 
 def empty_state() -> dict[str, Any]:
-    return {"nodes": [], "edges": [], "selectedInvariants": list(DEFAULT_INVARIANTS)}
+    return {"nodes": [], "edges": [], "selectedInvariants": list(DEFAULT_INVARIANTS), "revision": 0}
 
 
 def normalize_state(value: Any) -> dict[str, Any]:
@@ -76,7 +76,9 @@ def normalize_state(value: Any) -> dict[str, Any]:
             pairs.add(pair)
             edges.append({"source": source, "target": target})
     selected = [name for name in raw.get("selectedInvariants", []) if name in INVARIANT_REGISTRY]
-    return {"nodes": nodes, "edges": edges, "selectedInvariants": selected}
+    revision = raw.get("revision", 0)
+    revision = revision if isinstance(revision, int) and revision >= 0 else 0
+    return {"nodes": nodes, "edges": edges, "selectedInvariants": selected, "revision": revision}
 
 
 def graph_from_state(value: Any) -> nx.Graph:
@@ -122,6 +124,7 @@ def analyze_state(value: Any, minimum: list[tuple[str, ...]] | None = None) -> d
         "order": graph.number_of_nodes(), "size": graph.number_of_edges(), "invariants": invariant_rows,
         "ready": False, "count": 0, "rivalCount": 0, "matchingClassSize": 0,
         "domainSize": 0, "candidates": [], "minimum": minimum or [], "minimumComputed": minimum is not None,
+        "revision": state["revision"],
     }
     if graph.number_of_nodes() == 0:
         return base | {"message": "Add at least one vertex to begin identification."}
@@ -199,6 +202,11 @@ def render() -> None:
     if isinstance(received, dict):
         state = normalize_state(received)
     event = result.get("event")
+    # A trigger can arrive before Streamlit exposes the paired persistent
+    # state in ComponentResult. Carrying the normalized state in the trigger
+    # makes graph mutations atomic across the v2 boundary.
+    if isinstance(event, dict) and isinstance(event.get("state"), dict):
+        state = normalize_state(event["state"])
     state, compute_minimum = _apply_event(state, event)
     if compute_minimum:
         graph = graph_from_state(state)

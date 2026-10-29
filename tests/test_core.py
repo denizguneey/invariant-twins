@@ -123,6 +123,18 @@ def test_identify_adapter_unique_and_one_graph_domain_have_safe_rival_semantics(
     assert data["eliminated"] == 100 and data["candidates"] == []
 
 
+def test_identify_adapter_reconstructs_the_connected_seven_vertex_regression_graph():
+    state = {
+        "nodes": [{"id": node, "x": index * 10, "y": index * 5} for index, node in enumerate("ABCDEFG")],
+        "edges": [{"source": a, "target": b} for a, b in [("A", "B"), ("A", "D"), ("D", "C"), ("C", "B"), ("C", "E"), ("A", "F"), ("B", "G")]],
+        "selectedInvariants": ["degree_sequence"], "revision": 17,
+    }
+    graph = graph_from_state(state)
+    assert graph.number_of_nodes() == 7 and graph.number_of_edges() == 7
+    assert nx.is_connected(graph)
+    assert analyze_state(state)["revision"] == 17
+
+
 def test_twin_view_graph6_witnesses_and_diameter_paths():
     graph, other = witnesses()
     assert {tuple(sorted(edge)) for edge in graph.edges()} == G_EDGES

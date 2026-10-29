@@ -9224,7 +9224,14 @@ function ie({ bridge: e }) {
 	let [t, n] = (0, _.useState)(e.data.state), [r, i] = (0, _.useState)([]), [a, o] = (0, _.useState)(!1);
 	(0, _.useEffect)(() => n(e.data.state), [e.data.state]);
 	let s = e.data.analysis, c = (r, a = "graph_changed") => {
-		i((e) => [...e, ne(t)].slice(-20)), n(r), e.setStateValue("state", r), e.setTriggerValue("event", { type: a });
+		let o = {
+			...r,
+			revision: (t.revision || 0) + 1
+		};
+		i((e) => [...e, ne(t)].slice(-20)), n(o), e.setStateValue("state", o), e.setTriggerValue("event", {
+			type: a,
+			state: o
+		});
 	}, l = (t) => e.setTriggerValue("event", { type: t }), u = (e) => c({
 		...t,
 		selectedInvariants: t.selectedInvariants.includes(e) ? t.selectedInvariants.filter((t) => t !== e) : [...t.selectedInvariants, e]
