@@ -63,7 +63,8 @@ def test_identification_recommendations_and_minimum_sets_are_deterministic():
 
 def test_identification_rejects_disconnected_or_unsupported_graphs():
     assert not supported_graph(nx.empty_graph(2))
-    assert not supported_graph(nx.path_graph(8))
+    assert supported_graph(nx.path_graph(8))
+    assert not supported_graph(nx.path_graph(9))
     with __import__("pytest").raises(ValueError):
         candidate_class(nx.empty_graph(2), (), [])
 

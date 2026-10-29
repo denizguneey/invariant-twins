@@ -2,6 +2,8 @@
 
 from collections.abc import Iterator
 from pathlib import Path
+from functools import lru_cache
+from collections.abc import Iterable
 import os
 import shutil
 import subprocess
@@ -122,3 +124,27 @@ def iter_connected_graphs(order: int, executable_path: str | None = None) -> Ite
         yield from iter_atlas_connected_graphs(order)
     else:
         yield from iter_geng_connected_graphs(order, executable_path)
+
+
+N8_CATALOG = Path(__file__).resolve().parents[2] / "data" / "connected" / "n8.g6"
+
+
+@lru_cache(maxsize=1)
+def n8_catalog_domain() -> tuple[nx.Graph, ...]:
+    """Load the vendored complete connected order-8 McKay catalogue once."""
+    lines = tuple(line.strip() for line in N8_CATALOG.read_text(encoding="ascii").splitlines() if line.strip())
+    if len(lines) != 11117 or len(lines) != len(set(lines)):
+        raise ValueError("n=8 connected catalogue integrity check failed")
+    graphs = tuple(nx.from_graph6_bytes(line.encode("ascii")) for line in lines)
+    if any(graph.number_of_nodes() != 8 or not nx.is_connected(graph) or graph.is_multigraph() for graph in graphs):
+        raise ValueError("n=8 connected catalogue contains an invalid graph")
+    return graphs
+
+
+def connected_graph_domain(order: int) -> Iterable[nx.Graph]:
+    """Offline exhaustive connected-simple domain through order 8."""
+    if 1 <= order <= 7:
+        return iter_atlas_connected_graphs(order)
+    if order == 8:
+        raise ValueError("n=8 is served by the verified SQLite index, not a materialized graph domain")
+    raise ValueError(f"unsupported connected graph order: {order}")

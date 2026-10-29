@@ -1,5 +1,5 @@
-import React,{useEffect,useRef,useState}from"react";import{createRoot}from"react-dom/client";import{BrowserRouter,NavLink,Route,Routes}from"react-router-dom";import{tr as t}from"./i18n/tr";import"./styles.css";
-type N={id:string;x:number;y:number};type E={source:string;target:string};type G={nodes:N[];edges:E[];invariants:string[]};const labels="ABCDEFG";
+import React,{useEffect,useRef,useState}from"react";import{createRoot}from"react-dom/client";import{BrowserRouter,NavLink,Route,Routes}from"react-router-dom";import{tr as t}from"./i18n/tr";import{Explore}from"./Explore";import{Frontier}from"./Frontier";import{Research as ResearchPage}from"./Research";import"./styles.css";
+type N={id:string;x:number;y:number};type E={source:string;target:string};type G={nodes:N[];edges:E[];invariants:string[]};const labels="ABCDEFGH";
 const demo:G={nodes:[{id:"A",x:160,y:95},{id:"B",x:390,y:95},{id:"C",x:390,y:240},{id:"D",x:160,y:240},{id:"E",x:510,y:168}],edges:[["A","B"],["B","C"],["C","D"],["D","A"],["C","E"]].map(([source,target])=>({source,target})),invariants:["degree_sequence"]};
 const copy=<T,>(x:T):T=>JSON.parse(JSON.stringify(x));const math=(g:G)=>JSON.stringify({n:g.nodes.map(x=>x.id).sort(),e:g.edges.map(x=>[x.source,x.target].sort()).sort(),i:[...g.invariants].sort()});
 const api=async(path:string,body?:unknown)=>{const r=await fetch(path,{method:body?"POST":"GET",headers:body?{"Content-Type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error();return r.json()};
@@ -33,7 +33,7 @@ function Mini({g,label}:{g:{nodes:N[];edges:E[]};label:string}){
     })}
   </svg>
 }
-function Editor({g,setG}:{g:G;setG:(x:G)=>void}){const[tool,setTool]=useState("select"),[first,setFirst]=useState<string|null>(null),[history,setHistory]=useState<G[]>([]);const ref=useRef(g),drag=useRef<string|null>(null);useEffect(()=>{ref.current=g},[g]);const change=(x:G)=>{setHistory(h=>[...h,copy(ref.current)].slice(-20));ref.current=x;setG(x)};const select=()=>{setTool("select");setFirst(null)};const point=(e:React.PointerEvent<SVGSVGElement>)=>{const r=e.currentTarget.getBoundingClientRect();return{x:Math.max(24,Math.min(576,(e.clientX-r.left)*600/r.width)),y:Math.max(24,Math.min(336,(e.clientY-r.top)*360/r.height))}};const clickNode=(id:string)=>{if(tool==="edge"){if(!first)setFirst(id);else{const duplicate=ref.current.edges.some(e=>(e.source===first&&e.target===id)||(e.source===id&&e.target===first));if(first!==id&&!duplicate)change({...ref.current,edges:[...ref.current.edges,{source:first,target:id}]});select()}}else if(tool==="delete"){change({...ref.current,nodes:ref.current.nodes.filter(n=>n.id!==id),edges:ref.current.edges.filter(e=>e.source!==id&&e.target!==id)});select()}};return <section className="card"><h2>{t.editor.title}</h2><div className="toolbar"><button className={tool==="select"?"active":""} onClick={select}>{t.editor.select}</button><button className={tool==="vertex"?"active":""} disabled={g.nodes.length===7} title={t.editor.limit} onClick={()=>setTool("vertex")}>{t.editor.addVertex}</button><button className={tool==="edge"?"active":""} onClick={()=>setTool("edge")}>{t.editor.addEdge}</button><button className={tool==="delete"?"active":""} onClick={()=>setTool("delete")}>{t.editor.delete}</button><span/><button onClick={()=>setG({...g,nodes:g.nodes.map((n,i)=>({...n,x:120+i%4*120,y:90+Math.floor(i/4)*150}))})}>{t.editor.layout}</button></div>{first&&<div className="hint">{t.editor.start}: {first}</div>}<svg className="canvas" viewBox="0 0 600 360" onClick={e=>{if(e.target!==e.currentTarget)return;if(tool==="vertex"){const id=labels.split("").find(x=>!ref.current.nodes.some(n=>n.id===x));if(id){change({...ref.current,nodes:[...ref.current.nodes,{id,...point(e as unknown as React.PointerEvent<SVGSVGElement>)}]});select()}}else setFirst(null)}} onPointerMove={e=>{if(!drag.current)return;const p=point(e),x={...ref.current,nodes:ref.current.nodes.map(n=>n.id===drag.current?{...n,...p}:n)};ref.current=x;setG(x)}} onPointerUp={e=>{drag.current=null;e.currentTarget.releasePointerCapture(e.pointerId)}}>{g.nodes.length===0&&<text className="empty" x="300" y="180">{t.editor.help}</text>}{g.edges.map((e,i)=>{const a=g.nodes.find(n=>n.id===e.source),b=g.nodes.find(n=>n.id===e.target);return a&&b?<g key={i}><line className="hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} onClick={ev=>{ev.stopPropagation();if(tool==="delete"){change({...ref.current,edges:ref.current.edges.filter((_,j)=>j!==i)});select()}}}/><line className="edge" x1={a.x} y1={a.y} x2={b.x} y2={b.y}/></g>:null})}{g.nodes.map(n=><g className="node" key={n.id} onPointerDown={e=>{if(tool==="select"){drag.current=n.id;e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId)}}} onClick={e=>{e.stopPropagation();clickNode(n.id)}}><circle className={first===n.id?"selected":""} cx={n.x} cy={n.y} r="17"/><text x={n.x} y={n.y+5}>{n.id}</text></g>)}</svg><div className="actions"><button disabled={!history.length} onClick={()=>{const x=history.at(-1);if(x){setHistory(h=>h.slice(0,-1));setG(x)}}}>{t.editor.undo}</button><button onClick={()=>change({nodes:[],edges:[],invariants:g.invariants})}>{t.editor.clear}</button><button onClick={()=>change(copy(demo))}>{t.editor.example}</button></div></section>}
+function Editor({g,setG}:{g:G;setG:(x:G)=>void}){const[tool,setTool]=useState("select"),[first,setFirst]=useState<string|null>(null),[history,setHistory]=useState<G[]>([]);const ref=useRef(g),drag=useRef<string|null>(null);useEffect(()=>{ref.current=g},[g]);const change=(x:G)=>{setHistory(h=>[...h,copy(ref.current)].slice(-20));ref.current=x;setG(x)};const select=()=>{setTool("select");setFirst(null)};const point=(e:React.PointerEvent<SVGSVGElement>)=>{const r=e.currentTarget.getBoundingClientRect();return{x:Math.max(24,Math.min(576,(e.clientX-r.left)*600/r.width)),y:Math.max(24,Math.min(336,(e.clientY-r.top)*360/r.height))}};const clickNode=(id:string)=>{if(tool==="edge"){if(!first)setFirst(id);else{const duplicate=ref.current.edges.some(e=>(e.source===first&&e.target===id)||(e.source===id&&e.target===first));if(first!==id&&!duplicate)change({...ref.current,edges:[...ref.current.edges,{source:first,target:id}]});select()}}else if(tool==="delete"){change({...ref.current,nodes:ref.current.nodes.filter(n=>n.id!==id),edges:ref.current.edges.filter(e=>e.source!==id&&e.target!==id)});select()}};return <section className="card"><h2>{t.editor.title}</h2><div className="toolbar"><button className={tool==="select"?"active":""} onClick={select}>{t.editor.select}</button><button className={tool==="vertex"?"active":""} disabled={g.nodes.length>=8} title={t.editor.limit} onClick={()=>setTool("vertex")}>{t.editor.addVertex}</button><button className={tool==="edge"?"active":""} onClick={()=>setTool("edge")}>{t.editor.addEdge}</button><button className={tool==="delete"?"active":""} onClick={()=>setTool("delete")}>{t.editor.delete}</button><span/><button onClick={()=>setG({...g,nodes:g.nodes.map((n,i)=>({...n,x:120+i%4*120,y:90+Math.floor(i/4)*150}))})}>{t.editor.layout}</button></div>{first&&<div className="hint">{t.editor.start}: {first}</div>}<svg className="canvas" viewBox="0 0 600 360" onClick={e=>{if(e.target!==e.currentTarget)return;if(tool==="vertex"){const id=labels.split("").find(x=>!ref.current.nodes.some(n=>n.id===x));if(id){change({...ref.current,nodes:[...ref.current.nodes,{id,...point(e as unknown as React.PointerEvent<SVGSVGElement>)}]});select()}}else setFirst(null)}} onPointerMove={e=>{if(!drag.current)return;const p=point(e),x={...ref.current,nodes:ref.current.nodes.map(n=>n.id===drag.current?{...n,...p}:n)};ref.current=x;setG(x)}} onPointerUp={e=>{drag.current=null;e.currentTarget.releasePointerCapture(e.pointerId)}}>{g.nodes.length===0&&<text className="empty" x="300" y="180">{t.editor.help}</text>}{g.edges.map((e,i)=>{const a=g.nodes.find(n=>n.id===e.source),b=g.nodes.find(n=>n.id===e.target);return a&&b?<g key={i}><line className="hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} onClick={ev=>{ev.stopPropagation();if(tool==="delete"){change({...ref.current,edges:ref.current.edges.filter((_,j)=>j!==i)});select()}}}/><line className="edge" x1={a.x} y1={a.y} x2={b.x} y2={b.y}/></g>:null})}{g.nodes.map(n=><g className="node" key={n.id} onPointerDown={e=>{if(tool==="select"){drag.current=n.id;e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId)}}} onClick={e=>{e.stopPropagation();clickNode(n.id)}}><circle className={first===n.id?"selected":""} cx={n.x} cy={n.y} r="17"/><text x={n.x} y={n.y+5}>{n.id}</text></g>)}</svg><div className="actions"><button disabled={!history.length} onClick={()=>{const x=history.at(-1);if(x){setHistory(h=>h.slice(0,-1));setG(x)}}}>{t.editor.undo}</button><button onClick={()=>change({nodes:[],edges:[],invariants:g.invariants})}>{t.editor.clear}</button><button onClick={()=>change(copy(demo))}>{t.editor.example}</button></div></section>}
 const inv=Object.keys(t.invariant).filter(x=>!["title","all"].includes(x));
 function Identify(){
   const[g,setG]=useState<G>(copy(demo)),
@@ -41,7 +41,7 @@ function Identify(){
     [result,setResult]=useState<any>(),
     [loading,setLoading]=useState(false),
     [error,setError]=useState(""),
-    [minimum,setMinimum]=useState<string[][]>(),
+    [minimum,setMinimum]=useState<string[][]>(),[minimumMessage,setMinimumMessage]=useState(""),
     [copied,setCopied]=useState<string|null>(null);
 
   const dirty=!saved||math(g)!==math(saved);
@@ -58,7 +58,7 @@ function Identify(){
       });
       setResult(r);
       setSaved(copy(target));
-      setMinimum(undefined);
+      setMinimum(undefined);setMinimumMessage("");
     }catch{
       setError(t.analysis.error);
     }finally{
@@ -130,13 +130,13 @@ function Identify(){
           {result.recommendation&&<div className="recommend">
             <small>{t.analysis.recommendation}</small>
             <h3>{t.invariant[result.recommendation.id as keyof typeof t.invariant]}</h3>
-            <p>Bu invariant kalan adayları {result.identification.rivalCount} → {result.recommendation.remaining} seviyesine indirir.</p>
+            <p>{result.identification.rivalCount} → {result.recommendation.remaining} rakip. {result.recommendation.remaining===0?`Kalan ${result.identification.rivalCount} adayın tamamını eliyor.`:`Kalan aday sayısını ${result.identification.rivalCount-result.recommendation.remaining} azaltıyor.`}</p>
             <button onClick={()=>toggle(result.recommendation.id)}>+ Parmak izine ekle</button>
           </div>}
           <div className="minimum">
             <b>{t.analysis.minimum}</b>
             <p>Bu grafı belirtilen sonlu alanda benzersiz tanımlayan en küçük desteklenen invariant altkümesini bulur.</p>
-            {minimum
+            {minimumMessage?<p className="neutral">{minimumMessage}</p>:minimum
               ?<div>{minimum[0]?.map(x=><mark key={x}>{t.invariant[x as keyof typeof t.invariant]}</mark>)}</div>
               :<button onClick={async()=>{
                 const r=await api("/api/identify/minimum-set",{
@@ -144,7 +144,7 @@ function Identify(){
                   edges:g.edges.map(e=>[e.source,e.target]),
                   invariants:g.invariants
                 });
-                setMinimum(r.sets);
+                if(r.status==="unavailable"){setMinimumMessage(r.message);setMinimum(undefined)}else setMinimum(r.sets);
               }}>{t.analysis.compute}</button>}
             <small>Sonlu karşılaştırma alanı için hesaplanır.</small>
           </div>
@@ -157,7 +157,7 @@ function Identify(){
 
     <section className="bottom-grid">
       <article className="card fingerprint">
-        <h2>{t.fingerprint.title}</h2>
+        <h2>Analiz Özeti</h2>
         {current?<>
           <div className="fingerprint-section">
             <h3>Graf Özeti</h3>
@@ -166,8 +166,8 @@ function Identify(){
               <dt>{t.fingerprint.size}</dt><dd>{result.graph.size}</dd>
             </dl>
             <div className="graph6-row">
-              <span>graph6</span>
-              <button onClick={()=>copyText(result.graph.graph6,"user")}>{copied==="user"?"Kopyalandı":"Kopyala"}</button>
+              <span>graph6 kodu</span>
+              <button onClick={()=>copyText(result.graph.graph6,"user")}>{copied==="user"?"✓ Kopyalandı":"Kopyala"}</button>
             </div>
             <code>{result.graph.graph6}</code>
           </div>
@@ -185,15 +185,15 @@ function Identify(){
 
       <article className="card">
         <h2>{t.candidates.title}</h2>
-        {current?<div className="cards">
+        {current?<><div className="cards">
           <div className="candidate">
             <b>{t.candidates.yours}</b>
-            <Mini g={g} label={t.candidates.yours}/>
+            <Mini g={saved??g} label={t.candidates.yours}/>
             <small>n = {result.graph.order} · m = {result.graph.size}</small>
             <div className="candidate-reason">Seçili parmak izinin referans grafı.</div>
             <div className="graph6-row">
-              <span>graph6</span>
-              <button onClick={()=>copyText(result.graph.graph6,"user-card")}>{copied==="user-card"?"Kopyalandı":"Kopyala"}</button>
+              <span>graph6 kodu</span>
+              <button onClick={()=>copyText(result.graph.graph6,"user-card")}>{copied==="user-card"?"✓ Kopyalandı":"Kopyala"}</button>
             </div>
             <code>{result.graph.graph6}</code>
           </div>
@@ -201,23 +201,23 @@ function Identify(){
             <b>Aday #{i+1}</b>
             <Mini g={x} label={`Aday ${i+1}`}/>
             <small>n = {x.order} · m = {x.size}</small>
-            <div className="candidate-reason">Seçili parmak izi referans grafla eşleşiyor.</div>
+            <div className="candidate-reason"><b>Neden aday?</b>{analyzedInvariantIds.map(id=>` ${t.invariant[id as keyof typeof t.invariant]}: ${String(result.invariants?.[id]??"—")}`).join(" · ")}</div>
             <div className="graph6-row">
-              <span>graph6</span>
-              <button onClick={()=>copyText(x.graph6,`candidate-${i}`)}>{copied===`candidate-${i}`?"Kopyalandı":"Kopyala"}</button>
+              <span>graph6 kodu</span>
+              <button onClick={()=>copyText(x.graph6,`candidate-${i}`)}>{copied===`candidate-${i}`?"✓ Kopyalandı":"Kopyala"}</button>
             </div>
             <code>{x.graph6}</code>
           </div>)}
           {!result.candidates.length&&<p>{t.candidates.none}</p>}
-        </div>:<p>{dirty?t.candidates.dirty:result?.message}</p>}
+        </div><p className="candidate-label-help">Düğüm etiketleri yalnızca görselleştirme amaçlıdır; graflar arasında etiket eşlemesi ifade etmez.</p></>:<p>{dirty?t.candidates.dirty:result?.message}</p>}
       </article>
     </section>
   </>
 }
 
 function Page({title,intro,children}:{title:string;intro:string;children:React.ReactNode}){return <main><div className="hero"><h1>{title}</h1><p>{intro}</p></div>{children}</main>}
-function Explore(){const[d,setD]=useState<any>(),[max,setMax]=useState(7),[chosen,setChosen]=useState(["Edges","Degree sequence"]),[separating,setSeparating]=useState(false);const search=()=>api("/api/twins/search",{max_order:max,invariants:chosen}).then(setD);useEffect(search,[]);return <Page title={t.pages.exploreTitle} intro={t.pages.exploreIntro}><div className="explore-layout"><section className="card controls"><h2>Parmak izi seçimi</h2><label>En büyük mertebe: n = {max}<input type="range" min="3" max="7" value={max} onChange={e=>setMax(Number(e.target.value))}/></label><p>Uyumlu invariantlar</p>{["Edges","Degree sequence","Triangle count","Clique number","Bridge count","Adjacency spectrum"].map(name=><label key={name}><input type="checkbox" checked={chosen.includes(name)} onChange={()=>setChosen(x=>x.includes(name)?x.filter(y=>y!==name):[...x,name])}/>{name==="Edges"?"Kenar sayısı":name==="Degree sequence"?"Derece dizisi":name==="Triangle count"?"Üçgen sayısı":name==="Clique number"?"Klik sayısı":name==="Bridge count"?"Köprü sayısı":"Komşuluk spektrumu"}</label>)}<button className="primary" disabled={!chosen.length} onClick={search}>Parmak izini incele</button></section><section>{d?.collisionFound?<><div className="notice">Bu parmak izi izomorfik olmayan grafları her zaman ayıramıyor. Sonuç, n ≤ {max} bağlı basit graflardan oluşan sonlu alanda doğrulandı.</div><div className="twin-grid">{d.graphs.map((x:any)=><article className="card" key={x.name}><h2>Graf {x.name} · n={x.order}, m={x.size}</h2><Mini g={x} label={`Graf ${x.name}`}/><dl>{Object.entries(x.values).map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{String(v)}</dd></React.Fragment>)}</dl><code>{x.graph6}</code><button onClick={()=>navigator.clipboard.writeText(x.graph6)}>graph6'yı kopyala</button></article>)}</div><div className="card"><b>İzomorfizm doğrulaması</b><p>NetworkX sonucu: izomorfik değil.</p>{d.separating&&<><button onClick={()=>setSeparating(!separating)}>Ayıran bir özellik göster</button>{separating&&<p>Seçili parmak izi bu iki grafı ayıramıyor; ancak <b>{d.separating.id}</b> farklı: G = {d.separating.g}, H = {d.separating.h}.</p>}</>}</div></>:<div className="card">Belirtilen sonlu arama alanında çakışma bulunmadı. Bu evrensel bir teorem değildir.</div>}</section></div></Page>}
-function Frontier(){const[d,setD]=useState<any>(),[selected,setSelected]=useState<any>();useEffect(()=>{api("/api/frontier").then(setD)},[]);const symbol=(s:string)=>s==="verified"?"✓":s==="collision"?"×":"—";return <Page title={t.pages.frontierTitle} intro="Parmak izi sınırı, sıralanmış sonlu graf alanında ilk izomorfik olmayan çakışmadan önce çakışmasız doğrulanan en büyük mertebedir."><div className="card table-wrap">{d&&<><div className="legend">✓ Çakışma yok · × İlk çakışma · — Raporlanmadı</div><table className="matrix"><thead><tr><th>Preset</th>{d.rows[0].cells.map((x:any)=><th key={x.order}>n = {x.order}</th>)}<th>Sınır</th></tr></thead><tbody>{d.rows.map((row:any)=><tr key={row.preset}><td>{row.preset}</td>{row.cells.map((cell:any)=><td key={cell.order}><button title={cell.status==="verified"?"Çakışmasız olarak doğrulandı":cell.status==="collision"?"İlk çakışma":"Raporlanmadı"} onClick={()=>setSelected({row,cell})}>{symbol(cell.status)}</button></td>)}<td>{row.firstCollisionOrder?row.frontier:`≥${row.frontier}`}</td></tr>)}</tbody></table>{selected&&<div className="notice"><b>{selected.row.preset}, n = {selected.cell.order}</b><p>{selected.cell.status==="verified"?`${selected.cell.graphCount} bağlı graf çakışmasız olarak doğrulandı.`:selected.cell.status==="collision"?"Bu mertebede ilk doğrulanmış çakışma kaydedildi.":"Bu mertebe için sonuç raporlanmadı."}</p><small>{d.disclaimer}</small></div>}</>}</div></Page>}
+function LegacyExplore(){const[d,setD]=useState<any>(),[max,setMax]=useState(7),[chosen,setChosen]=useState(["Edges","Degree sequence"]),[separating,setSeparating]=useState(false);const search=()=>api("/api/twins/search",{max_order:max,invariants:chosen}).then(setD);useEffect(search,[]);return <Page title={t.pages.exploreTitle} intro={t.pages.exploreIntro}><div className="explore-layout"><section className="card controls"><h2>Parmak izi seçimi</h2><label>En büyük mertebe: n = {max}<input type="range" min="3" max="7" value={max} onChange={e=>setMax(Number(e.target.value))}/></label><p>Uyumlu invariantlar</p>{["Edges","Degree sequence","Triangle count","Clique number","Bridge count","Adjacency spectrum"].map(name=><label key={name}><input type="checkbox" checked={chosen.includes(name)} onChange={()=>setChosen(x=>x.includes(name)?x.filter(y=>y!==name):[...x,name])}/>{name==="Edges"?"Kenar sayısı":name==="Degree sequence"?"Derece dizisi":name==="Triangle count"?"Üçgen sayısı":name==="Clique number"?"Klik sayısı":name==="Bridge count"?"Köprü sayısı":"Komşuluk spektrumu"}</label>)}<button className="primary" disabled={!chosen.length} onClick={search}>Parmak izini incele</button></section><section>{d?.collisionFound?<><div className="notice">Bu parmak izi izomorfik olmayan grafları her zaman ayıramıyor. Sonuç, n ≤ {max} bağlı basit graflardan oluşan sonlu alanda doğrulandı.</div><div className="twin-grid">{d.graphs.map((x:any)=><article className="card" key={x.name}><h2>Graf {x.name} · n={x.order}, m={x.size}</h2><Mini g={x} label={`Graf ${x.name}`}/><dl>{Object.entries(x.values).map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{String(v)}</dd></React.Fragment>)}</dl><code>{x.graph6}</code><button onClick={()=>navigator.clipboard.writeText(x.graph6)}>graph6'yı kopyala</button></article>)}</div><div className="card"><b>İzomorfizm doğrulaması</b><p>NetworkX sonucu: izomorfik değil.</p>{d.separating&&<><button onClick={()=>setSeparating(!separating)}>Ayıran bir özellik göster</button>{separating&&<p>Seçili parmak izi bu iki grafı ayıramıyor; ancak <b>{d.separating.id}</b> farklı: G = {d.separating.g}, H = {d.separating.h}.</p>}</>}</div></>:<div className="card">Belirtilen sonlu arama alanında çakışma bulunmadı. Bu evrensel bir teorem değildir.</div>}</section></div></Page>}
+function LegacyFrontier(){const[d,setD]=useState<any>(),[selected,setSelected]=useState<any>();useEffect(()=>{api("/api/frontier").then(setD)},[]);const symbol=(s:string)=>s==="verified"?"✓":s==="collision"?"×":"—";return <Page title={t.pages.frontierTitle} intro="Parmak izi sınırı, sıralanmış sonlu graf alanında ilk izomorfik olmayan çakışmadan önce çakışmasız doğrulanan en büyük mertebedir."><div className="card table-wrap">{d&&<><div className="legend">✓ Çakışma yok · × İlk çakışma · — Raporlanmadı</div><table className="matrix"><thead><tr><th>Preset</th>{d.rows[0].cells.map((x:any)=><th key={x.order}>n = {x.order}</th>)}<th>Sınır</th></tr></thead><tbody>{d.rows.map((row:any)=><tr key={row.preset}><td>{row.preset}</td>{row.cells.map((cell:any)=><td key={cell.order}><button title={cell.status==="verified"?"Çakışmasız olarak doğrulandı":cell.status==="collision"?"İlk çakışma":"Raporlanmadı"} onClick={()=>setSelected({row,cell})}>{symbol(cell.status)}</button></td>)}<td>{row.firstCollisionOrder?row.frontier:`≥${row.frontier}`}</td></tr>)}</tbody></table>{selected&&<div className="notice"><b>{selected.row.preset}, n = {selected.cell.order}</b><p>{selected.cell.status==="verified"?`${selected.cell.graphCount} bağlı graf çakışmasız olarak doğrulandı.`:selected.cell.status==="collision"?"Bu mertebede ilk doğrulanmış çakışma kaydedildi.":"Bu mertebe için sonuç raporlanmadı."}</p><small>{d.disclaimer}</small></div>}</>}</div></Page>}
 function Research(){const sections=[["Yöntem ve sonlu alan kapsamı","Bu proje bağlı basit grafları karşılaştırır. Graph Atlas, 7 düğüme kadar bağlı etiketsiz graf alanını sağlar. Sonuçlar bu sonlu alanın hesaplamalı bulgularıdır; tüm graflar için teorem değildir."],["Kesin hesaplama","Spektral invariantlar yaklaşık özdeğerlerle değil, tam sayı karakteristik polinom katsayılarıyla karşılaştırılır."],["Graph Atlas","Graf Atlas aynı mertebedeki bağlı graf adaylarını tam olarak taramak için kullanılır."],["nauty / geng","Repository, daha büyük mertebelerde bağlı etiketsiz graf üretimi için nauty/geng desteği içerir; yürütülebilir dosya otomatik indirilmez."],["İzomorfizm doğrulaması","Her raporlanan çakışma NetworkX izomorfizm kontrolüyle doğrulanır."],["graph6 ve yeniden üretilebilirlik","graph6 kodları tanık grafların tekrar oluşturulmasını sağlar. Araştırma dizinindeki sonuç kayıtları ve doğrulama betikleri bu süreci destekler."],["Matematiksel sözleşme","Kesin invariant tanımları ve sonlu arama alanı docs/mathematical-contract.md belgesinde yer alır."],["Sınırlamalar","Çakışma bulunmaması seçilen sonlu alan dışında ayırt edicilik garantisi vermez."]];return <Page title={t.pages.researchTitle} intro={t.pages.researchIntro}><div className="research-grid">{sections.map(([h,p])=><article className="card" key={h}><h2>{h}</h2><p>{p}</p></article>)}</div><div className="card resource-links"><h2>Araştırma arşivi</h2><a href="/docs/background.md">Matematiksel arka plan</a><a href="/docs/mathematical-contract.md">Matematiksel sözleşme</a><a href="/docs/reproducing-results.md">Sonuçları yeniden üretme notları</a></div></Page>}
-function App(){return <><Header/><Routes><Route path="/" element={<Explore/>}/><Route path="/tanimla" element={<Identify/>}/><Route path="/sinir" element={<Frontier/>}/><Route path="/arastirma" element={<Research/>}/></Routes></>}
+function App(){return <><Header/><Routes><Route path="/" element={<Explore/>}/><Route path="/tanimla" element={<Identify/>}/><Route path="/sinir" element={<Frontier/>}/><Route path="/arastirma" element={<ResearchPage/>}/></Routes></>}
 createRoot(document.getElementById("root")!).render(<BrowserRouter><App/></BrowserRouter>);

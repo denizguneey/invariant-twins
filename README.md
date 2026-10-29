@@ -4,18 +4,36 @@
 
 An interactive, exact-arithmetic laboratory for finite graph-invariant fingerprints and reproducible non-isomorphic witnesses.
 
-Live demo: https://invariant-twins.streamlit.app
+Birincil arayüz: React + FastAPI web uygulaması. Yeni geliştirme bu arayüzü hedefler.
+
+Streamlit uygulaması **Legacy arayüz** olarak korunur; henüz silinmemiştir.
 
 Can a few numerical properties of a graph uniquely identify it? If not, what is the first pair of different graphs that those properties confuse?
 
 
-## Quick start
+## Birincil web uygulaması (React + FastAPI)
 
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 python -m pip install -e ".[test]"
+cd web/frontend
+npm install
+npm run test
+npm run build
+
+cd ../..
+python -m invariant_twins.web
+```
+
+Ardından `http://127.0.0.1:8000` adresini açın. Geliştirme sırasında Vite
+sunucusu için `npm run dev`, Python testleri için
+`python -m pytest -q` kullanılır.
+
+## Legacy arayüz (Streamlit)
+
+```bash
 streamlit run app.py
 ```
 
@@ -28,6 +46,12 @@ streamlit run app.py
 - Computes a finite Fingerprint Frontier with exhaustive-count checks.
 
 ## Identify My Graph
+
+The runtime domain is intentionally split: `n ≤ 7` uses the NetworkX Graph
+Atlas, while `n = 8` uses McKay's complete connected catalogue through an
+Invariant Twins-generated, verified local SQLite invariant index.  McKay
+supplies graph structures; invariant values are computed by this project
+offline.  Web requests never generate a missing n=8 index.
 
 `Identify My Graph` starts with a connected five-vertex example that you can edit as a simple undirected graph. Select supported exact invariants to see the complete same-order collision class in the Graph Atlas, receive a deterministic best-next-invariant recommendation, and compute a minimum identifying set for that one graph.
 

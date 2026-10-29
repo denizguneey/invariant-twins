@@ -1,9 +1,16 @@
 .venv/
 frontend/**/node_modules/
+web/frontend/node_modules/
+frontend/**/test-results/
+test-results/
+.profile-readme-work/
 *.egg-info/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.test-tmp-*/
+data/connected/*.sqlite-shm
+data/connected/*.sqlite-wal
 .pytest-tmp*/
 .streamlit/
 artifacts/

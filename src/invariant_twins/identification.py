@@ -12,7 +12,7 @@ from .invariants import INVARIANT_REGISTRY, compute_invariant
 
 def supported_graph(target: nx.Graph) -> bool:
     """Whether a graph is in the interactive Graph Atlas comparison domain."""
-    return 1 <= target.number_of_nodes() <= 7 and nx.is_connected(target) and not target.is_directed()
+    return 1 <= target.number_of_nodes() <= 8 and nx.is_connected(target) and not target.is_directed()
 
 
 def graph_fingerprint(graph: nx.Graph, invariant_ids: Iterable[str]) -> tuple[object, ...]:
@@ -27,7 +27,7 @@ def graph_fingerprint(graph: nx.Graph, invariant_ids: Iterable[str]) -> tuple[ob
 def candidate_class(target: nx.Graph, invariant_ids: Iterable[str], domain: Iterable[nx.Graph]) -> list[nx.Graph]:
     """Return every same-order atlas graph matching the target's exact fingerprint."""
     if not supported_graph(target):
-        raise ValueError("Identify My Graph supports connected simple graphs with 1 to 7 vertices.")
+        raise ValueError("Identify My Graph supports connected simple graphs with 1 to 8 vertices.")
     target_value = graph_fingerprint(target, invariant_ids)
     return [
         graph for graph in domain
@@ -59,7 +59,7 @@ def minimum_identifying_sets(target: nx.Graph, domain: Iterable[nx.Graph], invar
     names = tuple(sorted(invariant_ids or INVARIANT_REGISTRY))
     records = [graph for graph in domain if graph.number_of_nodes() == target.number_of_nodes()]
     if not supported_graph(target):
-        raise ValueError("Identify My Graph supports connected simple graphs with 1 to 7 vertices.")
+        raise ValueError("Identify My Graph supports connected simple graphs with 1 to 8 vertices.")
     for size in range(len(names) + 1):
         solutions = [subset for subset in combinations(names, size) if len(candidate_class(target, subset, records)) == 1]
         if solutions:

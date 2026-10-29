@@ -10,10 +10,10 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License"]
-dependencies = ["streamlit>=1.50", "networkx>=3.5", "numpy>=2.0"]
+dependencies = ["streamlit>=1.50", "fastapi>=0.115", "uvicorn>=0.30", "networkx>=3.5", "numpy>=2.0"]
 
 [project.optional-dependencies]
-test = ["pytest>=8.0"]
+test = ["pytest>=8.0", "httpx2>=0.1"]
 
 [project.urls]
 Repository = "https://github.com/denizguneey/invariant-twins"
