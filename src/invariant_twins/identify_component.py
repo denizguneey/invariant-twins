@@ -90,6 +90,12 @@ def graph_from_state(value: Any) -> nx.Graph:
     return graph
 
 
+def topology_key(value: Any) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+    """Stable topology-only identity; editor coordinates never affect analysis dirtiness."""
+    state = normalize_state(value)
+    return (tuple(sorted(node["id"] for node in state["nodes"])), tuple(sorted(tuple(sorted((edge["source"], edge["target"]))) for edge in state["edges"])))
+
+
 def _graph6(graph: nx.Graph) -> str:
     mapping = {node: index for index, node in enumerate(sorted(graph.nodes()))}
     return nx.to_graph6_bytes(nx.relabel_nodes(graph, mapping), header=False).decode().strip()
@@ -188,12 +194,14 @@ def render() -> None:
     """Mount the single Components v2 Identify My Graph workspace."""
     if "identify_component_state" not in st.session_state:
         st.session_state.identify_component_state = example_state()
+        st.session_state.identify_component_analyzed = example_state()
         st.session_state.identify_component_minimum = None
     state = normalize_state(st.session_state.identify_component_state)
+    analyzed = normalize_state(st.session_state.identify_component_analyzed)
     workspace = _identify_workspace()
     result = workspace(
         key="identify_my_graph_workspace",
-        data={"state": state, "analysis": analyze_state(state, st.session_state.identify_component_minimum)},
+        data={"state": state, "analysis": analyze_state(analyzed, st.session_state.identify_component_minimum), "analysisDirty": topology_key(state) != topology_key(analyzed)},
         # Components v2 requires a declared callback for every state key that
         # receives a default. The rerun is supplied by the widget protocol.
         default={"state": state}, on_state_change=lambda: None, height="content",
@@ -208,6 +216,10 @@ def render() -> None:
     if isinstance(event, dict) and isinstance(event.get("state"), dict):
         state = normalize_state(event["state"])
     state, compute_minimum = _apply_event(state, event)
+    if isinstance(event, dict) and event.get("type") == "update_analysis":
+        st.session_state.identify_component_analyzed = state
+        st.session_state.identify_component_minimum = None
+        analyzed = state
     if compute_minimum:
         graph = graph_from_state(state)
         st.session_state.identify_component_minimum = minimum_identifying_sets(graph, _domain(graph.number_of_nodes())) if supported_graph(graph) else []

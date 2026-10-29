@@ -9061,10 +9061,12 @@ var e = Object.create, t = Object.defineProperty, n = Object.getOwnPropertyDescr
 	t.exports = b();
 })))(), ee = (e, t) => t.invariants?.find((t) => t.id === e)?.name || e, te = (e) => JSON.parse(JSON.stringify(e));
 function ne({ graph: e, title: t }) {
-	let n = e.nodes.map((e) => e.x), r = e.nodes.map((e) => e.y), i = n.length ? Math.min(...n) : 0, a = n.length ? Math.max(...n) : 1, o = r.length ? Math.min(...r) : 0, s = r.length ? Math.max(...r) : 1, c = a - i || 1, l = s - o || 1, u = new Map(e.nodes.map((e) => [e.id, {
+	let n = e.nodes.map((e) => e.x), r = e.nodes.map((e) => e.y), i = n.length ? Math.min(...n) : 0, a = n.length ? Math.max(...n) : 1, o = r.length ? Math.min(...r) : 0, s = r.length ? Math.max(...r) : 1, c = a - i, l = s - o, u = Math.min(c ? 170 / c : Infinity, l ? 95 / l : Infinity, 1e6);
+	c * u, l * u;
+	let d = new Map(e.nodes.map((e) => [e.id, {
 		...e,
-		x: 25 + 170 * (e.x - i) / c,
-		y: 20 + 95 * (e.y - o) / l
+		x: 120 + (e.x - (i + a) / 2) * u,
+		y: 67.5 + (e.y - (o + s) / 2) * u
 	}]));
 	return /* @__PURE__ */ (0, x.jsxs)("svg", {
 		className: "mini-graph",
@@ -9072,22 +9074,28 @@ function ne({ graph: e, title: t }) {
 		role: "img",
 		"aria-label": t,
 		children: [e.edges.map((e, t) => {
-			let n = u.get(e.source), r = u.get(e.target);
+			let n = d.get(e.source), r = d.get(e.target);
 			return n && r ? /* @__PURE__ */ (0, x.jsx)("line", {
 				x1: n.x,
 				y1: n.y,
 				x2: r.x,
 				y2: r.y
 			}, t) : null;
-		}), e.nodes.map((e) => /* @__PURE__ */ (0, x.jsxs)("g", { children: [/* @__PURE__ */ (0, x.jsx)("circle", {
-			cx: e.x,
-			cy: e.y,
-			r: "10"
-		}), /* @__PURE__ */ (0, x.jsx)("text", {
-			x: e.x,
-			y: e.y + 4,
-			children: e.id
-		})] }, e.id))]
+		}), e.nodes.map((e) => {
+			let t = d.get(e.id);
+			return /* @__PURE__ */ (0, x.jsxs)("g", {
+				"data-preview-node": e.id,
+				children: [/* @__PURE__ */ (0, x.jsx)("circle", {
+					cx: t.x,
+					cy: t.y,
+					r: "7"
+				}), /* @__PURE__ */ (0, x.jsx)("text", {
+					x: t.x,
+					y: t.y + 4,
+					children: e.id
+				})]
+			}, e.id);
+		})]
 	});
 }
 function S({ state: e, emit: t }) {
@@ -9184,20 +9192,46 @@ function S({ state: e, emit: t }) {
 				children: "Click Vertex, then the canvas to begin"
 			}),
 			e.edges.map((r, i) => {
-				let a = e.nodes.find((e) => e.id === r.source), o = e.nodes.find((e) => e.id === r.target);
-				return a && o ? /* @__PURE__ */ (0, x.jsx)("line", {
-					className: "edge",
-					x1: a.x,
-					y1: a.y,
-					x2: o.x,
-					y2: o.y,
-					onClick: (r) => {
-						r.stopPropagation(), n === "delete" && t({
-							...e,
-							edges: e.edges.filter((e, t) => t !== i)
-						}, "graph_changed");
-					}
-				}, i) : null;
+				let a = e.nodes.find((e) => e.id === r.source), o = e.nodes.find((e) => e.id === r.target), [s, c] = [r.source, r.target].sort(), l = (r) => {
+					r.stopPropagation(), n === "delete" && t({
+						...e,
+						edges: e.edges.filter((e, t) => t !== i)
+					}, "graph_changed");
+				};
+				return a && o ? /* @__PURE__ */ (0, x.jsxs)("g", { children: [
+					/* @__PURE__ */ (0, x.jsx)("line", {
+						"data-testid": `graph-edge-hit-line-${s}-${c}`,
+						"data-edge-source": s,
+						"data-edge-target": c,
+						x1: a.x,
+						y1: a.y,
+						x2: o.x,
+						y2: o.y,
+						stroke: "transparent",
+						strokeWidth: "14",
+						pointerEvents: "stroke",
+						onClick: l
+					}),
+					/* @__PURE__ */ (0, x.jsx)("line", {
+						"data-testid": `graph-edge-${s}-${c}`,
+						className: "edge",
+						x1: a.x,
+						y1: a.y,
+						x2: o.x,
+						y2: o.y
+					}),
+					/* @__PURE__ */ (0, x.jsx)("circle", {
+						"data-testid": `graph-edge-hit-marker-${s}-${c}`,
+						"data-edge-source": s,
+						"data-edge-target": c,
+						cx: (a.x + o.x) / 2,
+						cy: (a.y + o.y) / 2,
+						r: "7",
+						fill: "transparent",
+						pointerEvents: "all",
+						onClick: l
+					})
+				] }, `${s}-${c}`) : null;
 			}),
 			e.nodes.map((e) => /* @__PURE__ */ (0, x.jsxs)("g", {
 				className: "node",
@@ -9224,7 +9258,39 @@ function S({ state: e, emit: t }) {
 function re({ bridge: e }) {
 	let [t, n] = (0, _.useState)(e.data.state), [r, i] = (0, _.useState)([]), [a, o] = (0, _.useState)(!1);
 	(0, _.useEffect)(() => n(e.data.state), [e.data.state]);
-	let s = e.data.analysis, c = (r, a = "graph_changed") => {
+	let s = e.data.analysis, c = !!e.data.analysisDirty;
+	(0, _.useEffect)(() => {
+		let n = e.parentElement, r = [...n.querySelectorAll("article")].find((e) => e.textContent?.includes("Identification"));
+		if (n.querySelector("[data-analysis-pending]")?.remove(), r && c) {
+			let n = document.createElement("div");
+			n.dataset.analysisPending = "true", n.className = "neutral", n.textContent = "● Graph changed — update the analysis to evaluate the edited graph. ";
+			let i = document.createElement("button");
+			i.textContent = "Update Analysis", i.onclick = () => e.setTriggerValue("event", {
+				type: "update_analysis",
+				state: t
+			}), n.append(i), r.prepend(n);
+		}
+	}, [
+		c,
+		e.parentElement,
+		t
+	]), (0, _.useEffect)(() => {
+		let n = e.parentElement, r = n.querySelector("svg[aria-label=\"Interactive graph editor\"]");
+		r && (r.dataset.testid = "graph-canvas", r.dataset.nodeCount = String(t.nodes.length), r.dataset.edgeCount = String(t.edges.length), r.dataset.revision = String(t.revision || 0), r.querySelectorAll("g.node").forEach((e, n) => {
+			let r = t.nodes[n]?.id;
+			r && (e.setAttribute("data-testid", `graph-node-${r}`), e.setAttribute("data-node-id", r));
+		}), r.querySelectorAll("line.edge").forEach((e, n) => {
+			let r = t.edges[n];
+			if (r) {
+				let [t, n] = [r.source, r.target].sort();
+				e.setAttribute("data-testid", `graph-edge-${t}-${n}`), e.setAttribute("data-edge-source", t), e.setAttribute("data-edge-target", n);
+			}
+		})), n.querySelectorAll("button").forEach((e) => {
+			let t = e.textContent || "";
+			t.includes("Vertex") && (e.dataset.testid = "tool-add-vertex"), t.includes("Edge") && (e.dataset.testid = "tool-add-edge"), t.includes("Delete") && (e.dataset.testid = "tool-delete"), t.includes("Undo") && (e.dataset.testid = "undo-button"), t.includes("Clear") && (e.dataset.testid = "clear-button");
+		});
+	}, [e.parentElement, t]);
+	let l = (r, a = "graph_changed") => {
 		let o = {
 			...r,
 			revision: (t.revision || 0) + 1
@@ -9233,10 +9299,10 @@ function re({ bridge: e }) {
 			type: a,
 			state: o
 		});
-	}, l = (t) => e.setTriggerValue("event", { type: t }), u = (e) => c({
+	}, u = (t) => e.setTriggerValue("event", { type: t }), d = (e) => l({
 		...t,
 		selectedInvariants: t.selectedInvariants.includes(e) ? t.selectedInvariants.filter((t) => t !== e) : [...t.selectedInvariants, e]
-	}, "selected_invariants_changed"), d = s.minimumComputed ? (s.minimum?.length ?? 0) > 0 ? /* @__PURE__ */ (0, x.jsxs)(x.Fragment, { children: [
+	}, "selected_invariants_changed"), f = s.minimumComputed ? (s.minimum?.length ?? 0) > 0 ? /* @__PURE__ */ (0, x.jsxs)(x.Fragment, { children: [
 		/* @__PURE__ */ (0, x.jsx)("p", { children: "This graph can be uniquely identified using only:" }),
 		/* @__PURE__ */ (0, x.jsx)("p", { children: (a ? s.minimum.flat() : s.minimum[0]).map((e, t) => /* @__PURE__ */ (0, x.jsx)("mark", { children: ee(e, s) }, `${e}-${t}`)) }),
 		/* @__PURE__ */ (0, x.jsxs)("small", { children: [
@@ -9256,7 +9322,7 @@ function re({ bridge: e }) {
 		className: "neutral",
 		children: "No identifying subset exists within the currently supported invariant family for this finite domain."
 	}) : /* @__PURE__ */ (0, x.jsxs)(x.Fragment, { children: [/* @__PURE__ */ (0, x.jsx)("p", { children: "Find the smallest supported invariant subset that uniquely identifies this graph." }), /* @__PURE__ */ (0, x.jsx)("button", {
-		onClick: () => l("compute_minimum_identifying_set"),
+		onClick: () => u("compute_minimum_identifying_set"),
 		children: "Compute"
 	})] });
 	return /* @__PURE__ */ (0, x.jsxs)("main", {
@@ -9275,7 +9341,7 @@ function re({ bridge: e }) {
 							/* @__PURE__ */ (0, x.jsx)("h2", { children: "Graph Editor" }),
 							/* @__PURE__ */ (0, x.jsx)(S, {
 								state: t,
-								emit: c
+								emit: l
 							}),
 							/* @__PURE__ */ (0, x.jsxs)("div", {
 								className: "action-row",
@@ -9284,18 +9350,18 @@ function re({ bridge: e }) {
 										onClick: () => {
 											if (r.length) {
 												let e = r[r.length - 1];
-												i(r.slice(0, -1)), c(e, "graph_changed");
+												i(r.slice(0, -1)), l(e, "graph_changed");
 											}
 										},
 										disabled: !r.length,
 										children: "↶ Undo"
 									}),
 									/* @__PURE__ */ (0, x.jsx)("button", {
-										onClick: () => l("clear_graph"),
+										onClick: () => u("clear_graph"),
 										children: "Clear"
 									}),
 									/* @__PURE__ */ (0, x.jsx)("button", {
-										onClick: () => l("load_example"),
+										onClick: () => u("load_example"),
 										children: "Load example"
 									})
 								]
@@ -9308,7 +9374,7 @@ function re({ bridge: e }) {
 							/* @__PURE__ */ (0, x.jsxs)("div", {
 								className: "heading",
 								children: [/* @__PURE__ */ (0, x.jsxs)("h2", { children: ["Invariants ", /* @__PURE__ */ (0, x.jsx)("span", { children: "ⓘ" })] }), /* @__PURE__ */ (0, x.jsx)("button", {
-									onClick: () => c({
+									onClick: () => l({
 										...t,
 										selectedInvariants: s.invariants.map((e) => e.id)
 									}, "selected_invariants_changed"),
@@ -9321,7 +9387,7 @@ function re({ bridge: e }) {
 									/* @__PURE__ */ (0, x.jsx)("input", {
 										type: "checkbox",
 										checked: t.selectedInvariants.includes(e.id),
-										onChange: () => u(e.id),
+										onChange: () => d(e.id),
 										disabled: !s.ready
 									}),
 									/* @__PURE__ */ (0, x.jsx)("b", { children: e.name }),
@@ -9373,14 +9439,14 @@ function re({ bridge: e }) {
 										" rivals"
 									] }),
 									/* @__PURE__ */ (0, x.jsxs)("button", {
-										onClick: () => l("apply_recommended_invariant"),
+										onClick: () => u("apply_recommended_invariant"),
 										children: ["＋ Add ", ee(s.best.id, s)]
 									})
 								]
 							})] }),
 							/* @__PURE__ */ (0, x.jsxs)("div", {
 								className: "minimum",
-								children: [/* @__PURE__ */ (0, x.jsx)("b", { children: "♜ Minimum identifying set" }), d]
+								children: [/* @__PURE__ */ (0, x.jsx)("b", { children: "♜ Minimum identifying set" }), f]
 							})
 						] }) : /* @__PURE__ */ (0, x.jsxs)(x.Fragment, { children: [/* @__PURE__ */ (0, x.jsx)("div", {
 							className: "neutral",
