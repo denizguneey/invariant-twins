@@ -9478,6 +9478,19 @@ function re({ bridge: e }) {
 var C = /* @__PURE__ */ new WeakMap();
 function ie(e) {
 	let t = C.get(e.parentElement);
-	t || (t = (0, v.createRoot)(e.parentElement), C.set(e.parentElement, t)), t.render(/* @__PURE__ */ (0, x.jsx)(re, { bridge: e }));
+	t || (t = (0, v.createRoot)(e.parentElement), C.set(e.parentElement, t)), t.render(/* @__PURE__ */ (0, x.jsx)("div", {
+		"data-testid": "identify-workspace",
+		children: /* @__PURE__ */ (0, x.jsx)(re, { bridge: e })
+	})), queueMicrotask(() => {
+		let t = e.parentElement, n = e.data.state, r = t.querySelector("svg[aria-label=\"Interactive graph editor\"]");
+		r && (r.dataset.testid = "graph-canvas", r.dataset.nodeCount = String(n.nodes.length), r.dataset.edgeCount = String(n.edges.length), r.dataset.revision = String(n.revision || 0)), t.querySelectorAll("button").forEach((e) => {
+			let t = e.textContent || "";
+			t.includes("Clear") && (e.dataset.testid = "clear-button"), t.includes("Vertex") && (e.dataset.testid = "tool-add-vertex"), t.includes("Delete") && (e.dataset.testid = "tool-delete"), t.includes("Undo") && (e.dataset.testid = "undo-button"), t.includes("Compute") && (e.dataset.testid = "minimum-set-button");
+		});
+		let i = [...t.querySelectorAll("article")].find((e) => e.textContent?.includes("Identification"));
+		i && (i.dataset.testid = "identification-status");
+		let a = [...t.querySelectorAll("article")].find((e) => e.textContent?.includes("Candidate Graphs"));
+		a && (a.dataset.testid = "candidate-gallery");
+	});
 }
 export { ie as default };

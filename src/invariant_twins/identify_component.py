@@ -214,3 +214,5 @@ def render() -> None:
     elif isinstance(event, dict) and event.get("type") in {"graph_changed", "clear_graph", "load_example"}:
         st.session_state.identify_component_minimum = None
     st.session_state.identify_component_state = state
+    if isinstance(event, dict):
+        st.rerun()
