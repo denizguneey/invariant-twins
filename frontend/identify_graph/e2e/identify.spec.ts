@@ -1,0 +1,4 @@
+import { expect, test } from "@playwright/test";
+function errors(page: import("@playwright/test").Page) { const seen:string[]=[]; page.on("pageerror", error=>seen.push(error.message)); page.on("console", message=>{if(message.type()==="error") seen.push(message.text())}); return seen; }
+test("workspace mounts without browser errors", async ({page}) => { const seen=errors(page); await page.goto("/"); await expect(page.getByTestId("identify-workspace")).toBeVisible(); expect(seen).toEqual([]); });
+test("empty graph is safe", async ({page}) => { const seen=errors(page); await page.goto("/"); await page.getByTestId("clear-button").click(); await expect(page.getByTestId("identification-status")).toContainText("Add at least one vertex"); await expect(page.getByTestId("rival-count")).toHaveText("0"); expect(seen).toEqual([]); });

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot, Root } from "react-dom/client";
 import type { Analysis, Bridge, Edge, GraphState, Node } from "./types";
+import { nextLabel } from "./state";
 import "./styles.css";
 
 const LABELS = "ABCDEFG";
@@ -20,7 +21,7 @@ function Canvas({ state, emit }: { state: GraphState; emit: (next: GraphState, e
   const dragging = useRef<string | null>(null);
   const toPoint=(event: React.PointerEvent<SVGSVGElement>) => { const r=event.currentTarget.getBoundingClientRect(); return {x:Math.max(24, Math.min(576,(event.clientX-r.left)*600/r.width)),y:Math.max(24,Math.min(336,(event.clientY-r.top)*360/r.height))}; };
   const nodeClick=(id: string) => { if(tool === "edge") { if(!edgeStart) setEdgeStart(id); else { if(edgeStart !== id && !state.edges.some(e => (e.source===edgeStart&&e.target===id)||(e.source===id&&e.target===edgeStart))) emit({...state,edges:[...state.edges,{source:edgeStart,target:id}]},"graph_changed"); setEdgeStart(null); } return; } if(tool === "delete") { emit({...state,nodes:state.nodes.filter(n=>n.id!==id),edges:state.edges.filter(e=>e.source!==id&&e.target!==id)},"graph_changed"); return; } setSelected(id); };
-  const canvasClick=(event: React.MouseEvent<SVGSVGElement>) => { if(event.target !== event.currentTarget || tool!=="vertex" || state.nodes.length>=7) return; const p=toPoint(event as any); emit({...state,nodes:[...state.nodes,{id:LABELS[state.nodes.length],...p}]},"graph_changed"); };
+  const canvasClick=(event: React.MouseEvent<SVGSVGElement>) => { const id=nextLabel(state.nodes); if(event.target !== event.currentTarget || tool!=="vertex" || !id) return; const p=toPoint(event as any); emit({...state,nodes:[...state.nodes,{id,...p}]},"graph_changed"); };
   const removeSelected=()=> { if(!selected) return; const edge=state.edges.find(e=>`${e.source}-${e.target}`===selected); if(edge) emit({...state,edges:state.edges.filter(e=>e!==edge)},"graph_changed"); };
   return <div><div className="toolbar"><button className={tool==="select"?"active":""} onClick={()=>setTool("select")}>↖ Select</button><button className={tool==="vertex"?"active":""} onClick={()=>setTool("vertex")}>＋ Vertex</button><button className={tool==="edge"?"active":""} onClick={()=>setTool("edge")}>╱ Edge</button><button className={tool==="delete"?"active":""} onClick={()=>setTool("delete")}>⌫ Delete</button><span/><button onClick={()=>emit({...state,nodes:state.nodes.map((n,i)=>({id:n.id,x:110+(i%4)*130,y:90+Math.floor(i/4)*155}))},"graph_changed")}>Layout</button></div>
   <svg className="canvas" viewBox="0 0 600 360" onClick={canvasClick} onPointerMove={e=>{if(dragging.current){const p=toPoint(e);emit({...state,nodes:state.nodes.map(n=>n.id===dragging.current?{...n,...p}:n)})}}} onPointerUp={()=>dragging.current=null} role="img" aria-label="Interactive graph editor">
