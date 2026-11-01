@@ -76,6 +76,10 @@ class DiscriminationPayload(BaseModel):
         return self
 
 
+class RivalComparisonPayload(GraphPayload):
+    rival_graph6: str = Field(min_length=1)
+
+
 def graph_from_payload(payload: GraphPayload) -> nx.Graph:
     graph = nx.Graph()
     graph.add_nodes_from(payload.nodes)
@@ -188,6 +192,53 @@ def analyze_n8(graph: nx.Graph, payload: GraphPayload, base: dict[str, Any]) -> 
     return base | {"graph": base["graph"] | {"connected": True, "graph6": graph6(graph), "degreeSequence": display(degree_sequence(graph)), "triangleCount": user_values["triangle_count"]}, "invariants": {name: display(value) for name, value in user_values.items()}, "identification": {"rivalCount": len(rivals), "domainSize": index.domain_size, "possibleRivals": index.domain_size - 1, "eliminatedRivals": index.domain_size - 1 - len(rivals), "eliminatedPercent": round(100 * (1 - len(rivals) / (index.domain_size - 1))), "unique": not rivals}, "recommendation": recommendation, "candidates": candidates, "fingerprint": display(graph_fingerprint(graph, payload.invariants))}
 
 
+EXPLANATION_PRIORITY = ("triangle_count", "bridge_count", "clique_number", "independence_number", "chromatic_number", "degree_sequence", "adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly", "distance_charpoly", "generalized_charpoly")
+
+
+def comparison_response(user_values: dict[str, object], rival_values: dict[str, object], selected: list[str], order: int) -> dict[str, Any]:
+    """Render exact per-invariant equality records without changing their values."""
+    rows = [{"id": name, "userValue": display(user_values[name]), "rivalValue": display(rival_values[name]), "equal": display(user_values[name]) == display(rival_values[name])} for name in INVARIANT_REGISTRY]
+    selected_rows = [row for row in rows if row["id"] in selected]
+    differences = {row["id"]: row for row in rows if not row["equal"]}
+    first = next((differences[name] for name in EXPLANATION_PRIORITY if name in differences), None)
+    return {"order": order, "isomorphic": False, "selectedFingerprint": selected_rows, "invariants": rows, "distinguishingInvariantIds": list(differences), "headlineInvariantId": None if first is None else first["id"], "noDistinguishingInvariant": first is None}
+
+
+def compare_rival(payload: RivalComparisonPayload) -> dict[str, Any]:
+    graph = graph_from_payload(payload)
+    if not graph or not nx.is_connected(graph) or not supported_graph(graph):
+        raise HTTPException(status_code=422, detail="Karşılaştırma için desteklenen bağlı bir graf gerekir.")
+    selected = [name for name in INVARIANT_REGISTRY if name in set(payload.invariants)]
+    order = graph.number_of_nodes()
+    if order == 8:
+        try:
+            index = N8Index()
+        except N8IndexError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+        rival_id = index.id_for_graph6(payload.rival_graph6)
+        if rival_id is None:
+            raise HTTPException(status_code=404, detail="Rakip graf doğrulanmış n=8 kataloğunda bulunamadı.")
+        user_values = {name: compute_invariant(graph, name) for name in INVARIANT_REGISTRY}
+        rival_values = index.values([rival_id], INVARIANT_REGISTRY)[rival_id]
+        rival_graph = nx.from_graph6_bytes(payload.rival_graph6.encode())
+        if nx.is_isomorphic(graph, rival_graph) or any(display(rival_values[name]) != display(user_values[name]) for name in selected):
+            raise HTTPException(status_code=422, detail="Seçilen graf mevcut parmak izi için doğrulanmış rakip değil.")
+        return comparison_response(user_values, rival_values, selected, order)
+    try:
+        rival = nx.from_graph6_bytes(payload.rival_graph6.encode())
+    except nx.NetworkXError as error:
+        raise HTTPException(status_code=422, detail="Rakip graph6 kodu geçersiz.") from error
+    if rival.number_of_nodes() != order:
+        raise HTTPException(status_code=422, detail="Rakip grafın mertebesi kullanıcı grafıyla eşleşmiyor.")
+    records = domain(order)
+    stored_rival = next((item for item in records if graph6(item) == payload.rival_graph6), None)
+    if stored_rival is None or nx.is_isomorphic(graph, stored_rival) or graph_fingerprint(graph, selected) != graph_fingerprint(stored_rival, selected):
+        raise HTTPException(status_code=422, detail="Seçilen graf mevcut parmak izi için doğrulanmış rakip değil.")
+    user_values = {name: compute_invariant(graph, name) for name in INVARIANT_REGISTRY}
+    rival_values = {name: compute_invariant(stored_rival, name) for name in INVARIANT_REGISTRY}
+    return comparison_response(user_values, rival_values, selected, order)
+
+
 def twins_search_n8(payload: TwinsPayload) -> dict[str, Any]:
     """Find an n=8 collision from index values, decoding only the returned pair."""
     try:
@@ -232,6 +283,10 @@ def create_app() -> FastAPI:
     @app.post("/api/identify/analyze")
     def identify_analyze(payload: GraphPayload) -> dict[str, Any]:
         return analyze(payload)
+
+    @app.post("/api/identify/compare-rival")
+    def identify_compare_rival(payload: RivalComparisonPayload) -> dict[str, Any]:
+        return compare_rival(payload)
 
     @app.post("/api/identify/minimum-set")
     def identify_minimum(payload: GraphPayload) -> dict[str, Any]:

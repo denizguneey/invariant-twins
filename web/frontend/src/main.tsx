@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState}from"react";import{createRoot}from"react-dom/client";import{BrowserRouter,NavLink,Route,Routes}from"react-router-dom";import{tr as t}from"./i18n/tr";import{Explore}from"./Explore";import{Frontier}from"./Frontier";import{Research as ResearchPage}from"./Research";import"./styles.css";
+import React,{useEffect,useRef,useState}from"react";import{createRoot}from"react-dom/client";import{BrowserRouter,NavLink,Route,Routes}from"react-router-dom";import{tr as t}from"./i18n/tr";import{Explore}from"./Explore";import{Frontier}from"./Frontier";import{Research as ResearchPage}from"./Research";import{RivalComparison}from"./RivalComparison";import"./styles.css";
 type N={id:string;x:number;y:number};type E={source:string;target:string};type G={nodes:N[];edges:E[];invariants:string[]};const labels="ABCDEFGH";
 const demo:G={nodes:[{id:"A",x:160,y:95},{id:"B",x:390,y:95},{id:"C",x:390,y:240},{id:"D",x:160,y:240},{id:"E",x:510,y:168}],edges:[["A","B"],["B","C"],["C","D"],["D","A"],["C","E"]].map(([source,target])=>({source,target})),invariants:["degree_sequence"]};
 const copy=<T,>(x:T):T=>JSON.parse(JSON.stringify(x));const math=(g:G)=>JSON.stringify({n:g.nodes.map(x=>x.id).sort(),e:g.edges.map(x=>[x.source,x.target].sort()).sort(),i:[...g.invariants].sort()});
@@ -41,7 +41,7 @@ function Identify(){
     [result,setResult]=useState<any>(),
     [loading,setLoading]=useState(false),
     [error,setError]=useState(""),
-    [minimum,setMinimum]=useState<string[][]>(),[minimumMessage,setMinimumMessage]=useState(""),
+    [minimum,setMinimum]=useState<string[][]>(),[minimumMessage,setMinimumMessage]=useState(""),[selectedRival,setSelectedRival]=useState<any>(),
     [copied,setCopied]=useState<string|null>(null);
 
   const dirty=!saved||math(g)!==math(saved);
@@ -58,7 +58,7 @@ function Identify(){
       });
       setResult(r);
       setSaved(copy(target));
-      setMinimum(undefined);setMinimumMessage("");
+      setMinimum(undefined);setMinimumMessage("");setSelectedRival(undefined);
     }catch{
       setError(t.analysis.error);
     }finally{
@@ -197,7 +197,7 @@ function Identify(){
             </div>
             <code>{result.graph.graph6}</code>
           </div>
-          {result.candidates.map((x:any,i:number)=><div className="candidate" key={x.graph6}>
+          {result.candidates.map((x:any,i:number)=><div className={`candidate ${selectedRival?.graph6===x.graph6?"selected":""}`} key={x.graph6}>
             <b>Aday #{i+1}</b>
             <Mini g={x} label={`Aday ${i+1}`}/>
             <small>n = {x.order} · m = {x.size}</small>
@@ -207,10 +207,12 @@ function Identify(){
               <button onClick={()=>copyText(x.graph6,`candidate-${i}`)}>{copied===`candidate-${i}`?"✓ Kopyalandı":"Kopyala"}</button>
             </div>
             <code>{x.graph6}</code>
+            <button className="candidate-select" onClick={()=>setSelectedRival(x)}>{selectedRival?.graph6===x.graph6?"Rakip seçildi":"Bu rakip neden farklı?"}</button>
           </div>)}
           {!result.candidates.length&&<p>{t.candidates.none}</p>}
         </div><p className="candidate-label-help">Düğüm etiketleri yalnızca görselleştirme amaçlıdır; graflar arasında etiket eşlemesi ifade etmez.</p></>:<p>{dirty?t.candidates.dirty:result?.message}</p>}
       </article>
+      {current&&selectedRival&&saved&&<RivalComparison graph={saved} rival={selectedRival}/>}
     </section>
   </>
 }

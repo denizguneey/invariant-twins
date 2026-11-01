@@ -71,6 +71,11 @@ class N8Index:
         if row is None: raise KeyError(graph_id)
         return str(row[0])
 
+    def id_for_graph6(self, encoded: str) -> int | None:
+        """Return the verified catalogue identifier for one stable graph6 value."""
+        row = self.db.execute("SELECT id FROM graphs WHERE graph6=?", (encoded,)).fetchone()
+        return None if row is None else int(row[0])
+
     def graph6_many(self, ids: Iterable[int]) -> list[tuple[int, str]]:
         ids = list(ids)
         if not ids: return []
