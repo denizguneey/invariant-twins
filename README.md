@@ -16,6 +16,10 @@ Find two non-isomorphic graphs sharing a selected fingerprint, inspect their gra
 
 Browse archived finite-order collision/frontier results for selected invariant families. These research records are distinct from live application support.
 
+### Discrimination Power
+
+The Frontier page also reports exact fingerprint-class metrics for a chosen invariant set on the complete connected domains n=4 through n=8: uniquely identified graphs, indistinguishable pairs, and their corresponding rates. These are finite-domain measurements, not claims about every graph order.
+
 ### Research
 
 Read the methodology, finite-domain assumptions, data provenance, and reproducibility notes.

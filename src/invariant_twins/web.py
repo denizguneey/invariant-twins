@@ -21,6 +21,7 @@ from .invariants import ALL_INVARIANTS, invariant_values
 from .search import fingerprint as ui_fingerprint
 from .search import find_minimum_separating_sets
 from .frontier import PRESETS
+from .discrimination import discrimination_power
 
 ROOT = Path(__file__).resolve().parents[2]
 DIST = ROOT / "web" / "frontend" / "dist"
@@ -59,6 +60,17 @@ class TwinsPayload(BaseModel):
         if self.exact_order is not None and self.exact_order > self.max_order:
             raise ValueError("Kesin mertebe üst sınırı aşamaz.")
         unknown = set(self.invariants) - set(ALL_INVARIANTS)
+        if unknown:
+            raise ValueError(f"Bilinmeyen invariant: {', '.join(sorted(unknown))}")
+        return self
+
+
+class DiscriminationPayload(BaseModel):
+    invariants: list[str] = Field(default=["degree_sequence"], min_length=1)
+
+    @model_validator(mode="after")
+    def validate_selection(self) -> "DiscriminationPayload":
+        unknown = set(self.invariants) - set(INVARIANT_REGISTRY)
         if unknown:
             raise ValueError(f"Bilinmeyen invariant: {', '.join(sorted(unknown))}")
         return self
@@ -211,6 +223,11 @@ def create_app() -> FastAPI:
     @app.get("/api/invariants")
     def invariants() -> list[dict[str, str]]:
         return [{"id": item.id, "name": item.display_name} for item in INVARIANT_REGISTRY.values()]
+
+    @app.post("/api/discrimination-power")
+    def discrimination(payload: DiscriminationPayload) -> dict[str, Any]:
+        selected = [name for name in INVARIANT_REGISTRY if name in set(payload.invariants)]
+        return {"selectedInvariants": selected, "orders": discrimination_power(selected)}
 
     @app.post("/api/identify/analyze")
     def identify_analyze(payload: GraphPayload) -> dict[str, Any]:

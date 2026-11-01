@@ -86,3 +86,19 @@ class N8Index:
         for row in self.db.execute(f"SELECT graph_id,invariant_id,value FROM invariant_values WHERE graph_id IN ({mi}) AND invariant_id IN ({mn})", [*ids, *names]):
             result[int(row[0])][str(row[1])] = json.loads(row[2])
         return result
+
+    def fingerprint_class_sizes(self, names: Iterable[str]) -> list[int]:
+        """Return exact n=8 fingerprint class sizes without value decoding.
+
+        Stored canonical JSON text is the equality representation used by the
+        index. SQLite groups that text directly, so spectral values stay exact.
+        """
+        names = list(names)
+        if not names:
+            return [self.domain_size]
+        if any(name not in INVARIANT_REGISTRY for name in names):
+            raise KeyError("unknown invariant")
+        cases = ", ".join(f"MAX(CASE WHEN invariant_id=? THEN value END) AS v{index}" for index, _ in enumerate(names))
+        columns = ", ".join(f"v{index}" for index in range(len(names)))
+        sql = f"WITH fingerprints AS (SELECT graph_id, {cases} FROM invariant_values WHERE invariant_id IN ({','.join('?' for _ in names)}) AND error IS NULL GROUP BY graph_id) SELECT COUNT(*) AS class_size FROM fingerprints GROUP BY {columns}"
+        return [int(row[0]) for row in self.db.execute(sql, [*names, *names])]
