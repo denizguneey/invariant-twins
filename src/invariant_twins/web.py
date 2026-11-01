@@ -14,6 +14,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from .graph_sources import connected_graph_domain
 from .n8_index import N8Index, N8IndexError
+from .n8_canonical_map import N8CanonicalMap, N8CanonicalMapError
+from .canonical_identity import canonical_graph6
 from .identification import candidate_class, graph_fingerprint, minimum_identifying_sets, rank_next_invariants, supported_graph
 from .invariants import INVARIANT_REGISTRY, compute_invariant, degree_sequence
 from .twin_view import G_GRAPH6, H_GRAPH6, witnesses
@@ -113,7 +115,7 @@ def domain(order: int) -> list[nx.Graph]:
 def analyze(payload: GraphPayload) -> dict[str, Any]:
     graph = graph_from_payload(payload)
     base = {
-        "graph": {"order": graph.number_of_nodes(), "size": graph.number_of_edges(), "connected": bool(graph and nx.is_connected(graph)), "graph6": None},
+        "graph": {"order": graph.number_of_nodes(), "size": graph.number_of_edges(), "connected": bool(graph and nx.is_connected(graph)), "graph6": None, "canonicalGraph6": None},
         "invariants": {},
         "identification": None,
         "recommendation": None,
@@ -127,12 +129,13 @@ def analyze(payload: GraphPayload) -> dict[str, Any]:
         return base | {"message": "Tanımlamaya başlamak için tüm düğümleri bağlayın."}
     if not supported_graph(graph):
         return base | {"message": "Bu sonlu karşılaştırma alanında en fazla 8 düğümlü bağlı basit graflar desteklenir."}
+    canonical_identity = canonical_graph6(graph)
     if graph.number_of_nodes() == 8:
-        return analyze_n8(graph, payload, base)
+        return analyze_n8(graph, payload, base, canonical_identity)
     invariant_values = {name: display(compute_invariant(graph, name)) for name in INVARIANT_REGISTRY}
     records = domain(graph.number_of_nodes())
     matching = candidate_class(graph, payload.invariants, records)
-    rivals = [candidate for candidate in matching if not nx.is_isomorphic(candidate, graph)]
+    rivals = [candidate for candidate in matching if canonical_graph6(candidate) != canonical_identity]
     ranking = rank_next_invariants(graph, matching, payload.invariants)
     # Equal reductions are pedagogical choices, not different mathematics.
     # Prefer transparent structural invariants before exact spectral encodings.
@@ -154,23 +157,35 @@ def analyze(payload: GraphPayload) -> dict[str, Any]:
         record = positioned(candidate)
         record.update({"order": candidate.number_of_nodes(), "size": candidate.number_of_edges(), "graph6": graph6(candidate)})
         candidates.append(record)
-    return base | {"graph": base["graph"] | {"connected": True, "graph6": graph6(graph), "degreeSequence": display(degree_sequence(graph)), "triangleCount": compute_invariant(graph, "triangle_count")}, "invariants": invariant_values, "identification": {"rivalCount": len(rivals), "domainSize": len(records), "possibleRivals": possible, "eliminatedRivals": max(0, possible - len(rivals)), "eliminatedPercent": round(100 * (1 - len(rivals) / possible)) if possible else 100, "unique": not rivals}, "recommendation": recommendation, "candidates": candidates, "fingerprint": display(graph_fingerprint(graph, payload.invariants))}
+    return base | {"graph": base["graph"] | {"connected": True, "graph6": graph6(graph), "canonicalGraph6": canonical_identity, "degreeSequence": display(degree_sequence(graph)), "triangleCount": compute_invariant(graph, "triangle_count")}, "invariants": invariant_values, "identification": {"rivalCount": len(rivals), "domainSize": len(records), "possibleRivals": possible, "eliminatedRivals": max(0, possible - len(rivals)), "eliminatedPercent": round(100 * (1 - len(rivals) / possible)) if possible else 100, "unique": not rivals}, "recommendation": recommendation, "candidates": candidates, "fingerprint": display(graph_fingerprint(graph, payload.invariants))}
 
 
-def analyze_n8(graph: nx.Graph, payload: GraphPayload, base: dict[str, Any]) -> dict[str, Any]:
+def analyze_n8(graph: nx.Graph, payload: GraphPayload, base: dict[str, Any], canonical_identity: str) -> dict[str, Any]:
     """Production n=8 request: compute the user graph, never load the catalogue."""
     try:
         index = N8Index()
     except N8IndexError as error:
         return base | {"message": str(error)}
-    # Generalized polynomial is an exact complete n=8 key in the verified index;
-    # it identifies the user's catalogue class with one targeted materialization.
     user_values = {name: compute_invariant(graph, name) for name in INVARIANT_REGISTRY}
-    own = index.ids_matching({"generalized_charpoly": user_values["generalized_charpoly"]})
-    if len(own) != 1:
-        return base | {"message": "n=8 kullanıcı grafı doğrulanmış katalog sınıfıyla eşleştirilemedi."}
-    own_id = own[0]
-    own_graph = nx.from_graph6_bytes(index.graph6(own_id).encode())
+    try:
+        mapped = N8CanonicalMap().lookup(canonical_identity)
+    except N8CanonicalMapError:
+        mapped = None
+        canonical_map_available = False
+    else:
+        canonical_map_available = True
+    if canonical_map_available:
+        if mapped is None:
+            return base | {"message": "n=8 kullanıcı grafı kanonik katalog kimliğiyle eşleştirilemedi."}
+        own_id, own_graph6 = mapped
+    else:
+        # Compatibility fallback for installations that have not yet built the
+        # offline canonical map. It preserves existing n=8 behaviour.
+        own = index.ids_matching({"generalized_charpoly": user_values["generalized_charpoly"]})
+        if len(own) != 1:
+            return base | {"message": "n=8 kullanıcı grafı doğrulanmış katalog sınıfıyla eşleştirilemedi."}
+        own_id, own_graph6 = own[0], index.graph6(own[0])
+    own_graph = nx.from_graph6_bytes(own_graph6.encode())
     if not nx.is_isomorphic(own_graph, graph):
         return base | {"message": "n=8 katalog eşleştirmesi doğrulanamadı."}
     selected = {name: user_values[name] for name in payload.invariants}
@@ -189,7 +204,7 @@ def analyze_n8(graph: nx.Graph, payload: GraphPayload, base: dict[str, Any]) -> 
         candidate = nx.from_graph6_bytes(encoded.encode())
         record = positioned(candidate); record.update({"order": 8, "size": candidate.number_of_edges(), "graph6": encoded}); candidates.append(record)
     recommendation = None if not rivals or not ranking else {"id": ranking[0][0], "remaining": max(0, ranking[0][2] - 1)}
-    return base | {"graph": base["graph"] | {"connected": True, "graph6": graph6(graph), "degreeSequence": display(degree_sequence(graph)), "triangleCount": user_values["triangle_count"]}, "invariants": {name: display(value) for name, value in user_values.items()}, "identification": {"rivalCount": len(rivals), "domainSize": index.domain_size, "possibleRivals": index.domain_size - 1, "eliminatedRivals": index.domain_size - 1 - len(rivals), "eliminatedPercent": round(100 * (1 - len(rivals) / (index.domain_size - 1))), "unique": not rivals}, "recommendation": recommendation, "candidates": candidates, "fingerprint": display(graph_fingerprint(graph, payload.invariants))}
+    return base | {"graph": base["graph"] | {"connected": True, "graph6": graph6(graph), "canonicalGraph6": canonical_identity, "degreeSequence": display(degree_sequence(graph)), "triangleCount": user_values["triangle_count"]}, "invariants": {name: display(value) for name, value in user_values.items()}, "identification": {"rivalCount": len(rivals), "domainSize": index.domain_size, "possibleRivals": index.domain_size - 1, "eliminatedRivals": index.domain_size - 1 - len(rivals), "eliminatedPercent": round(100 * (1 - len(rivals) / (index.domain_size - 1))), "unique": not rivals}, "recommendation": recommendation, "candidates": candidates, "fingerprint": display(graph_fingerprint(graph, payload.invariants))}
 
 
 EXPLANATION_PRIORITY = ("triangle_count", "bridge_count", "clique_number", "independence_number", "chromatic_number", "degree_sequence", "adjacency_charpoly", "laplacian_charpoly", "signless_laplacian_charpoly", "distance_charpoly", "generalized_charpoly")
@@ -220,8 +235,13 @@ def compare_rival(payload: RivalComparisonPayload) -> dict[str, Any]:
             raise HTTPException(status_code=404, detail="Rakip graf doğrulanmış n=8 kataloğunda bulunamadı.")
         user_values = {name: compute_invariant(graph, name) for name in INVARIANT_REGISTRY}
         rival_values = index.values([rival_id], INVARIANT_REGISTRY)[rival_id]
+        try:
+            own = N8CanonicalMap().lookup(canonical_graph6(graph))
+        except N8CanonicalMapError:
+            own = None
         rival_graph = nx.from_graph6_bytes(payload.rival_graph6.encode())
-        if nx.is_isomorphic(graph, rival_graph) or any(display(rival_values[name]) != display(user_values[name]) for name in selected):
+        same_class = own is not None and own[0] == rival_id
+        if same_class or (own is None and nx.is_isomorphic(graph, rival_graph)) or any(display(rival_values[name]) != display(user_values[name]) for name in selected):
             raise HTTPException(status_code=422, detail="Seçilen graf mevcut parmak izi için doğrulanmış rakip değil.")
         return comparison_response(user_values, rival_values, selected, order)
     try:
@@ -232,7 +252,7 @@ def compare_rival(payload: RivalComparisonPayload) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="Rakip grafın mertebesi kullanıcı grafıyla eşleşmiyor.")
     records = domain(order)
     stored_rival = next((item for item in records if graph6(item) == payload.rival_graph6), None)
-    if stored_rival is None or nx.is_isomorphic(graph, stored_rival) or graph_fingerprint(graph, selected) != graph_fingerprint(stored_rival, selected):
+    if stored_rival is None or canonical_graph6(graph) == canonical_graph6(stored_rival) or graph_fingerprint(graph, selected) != graph_fingerprint(stored_rival, selected):
         raise HTTPException(status_code=422, detail="Seçilen graf mevcut parmak izi için doğrulanmış rakip değil.")
     user_values = {name: compute_invariant(graph, name) for name in INVARIANT_REGISTRY}
     rival_values = {name: compute_invariant(stored_rival, name) for name in INVARIANT_REGISTRY}

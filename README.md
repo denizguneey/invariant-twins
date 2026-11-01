@@ -117,7 +117,7 @@ npm run build
 - `data/connected/n8_invariants.sqlite` is the verified local invariant index.
 - `scripts/build_n8_index.py --status` reports index completeness and ready status.
 - `scripts/build_n8_index.py --validate` validates the index.
-- graph6 stores compact graph structures used for reproducible witnesses.
+- graph6 stores compact graph structures used for reproducible witnesses; ordinary graph6 is serialization and is not inherently canonical. Canonical graph6 first applies exact canonical labeling, then graph6 encoding, and is now used internally where applicable as a stable isomorphism-class identity when matching user graphs to finite-domain entries.
 
 The catalogue attribution and checksum are documented in `data/connected/README.md`. Reproduction and mathematical notes are in `docs/`, and citation metadata is provided in `CITATION.cff`.
 
